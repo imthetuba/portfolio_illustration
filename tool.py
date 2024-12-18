@@ -6,6 +6,14 @@ import streamlit as st
 import plotly.express as px
 from datetime import datetime
 
+# A script that uses Streamlit to create a simple portfolio illustration tool using Infront API.
+# The user can select a list of assets, set their weights, and view the portfolio performance over a specified date range.
+# To use the tool, you need to have an Infront account and API access. 
+# Write the following in your terminal to install the required packages and run the script:
+
+# pip install streamlit infrontconnect pandas plotly
+# python streamlit run tool.py
+
 # Connect to Infront API
 infront.InfrontConnect(user="David.Lundberg.ipt", password="Infront2022!")  # Replace with your credentials
 
