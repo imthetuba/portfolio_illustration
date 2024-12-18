@@ -6,21 +6,29 @@ import streamlit as st
 import plotly.express as px
 from datetime import datetime
 
-# A script that uses Streamlit to create a simple portfolio illustration tool using Infront API.
+# A script that uses Streamlit to create a portfolio illustration using Infront API. (https://software.infrontservices.com/helpfiles/infront/v86/en/index.html?api_python.html)
 # The user can select a list of assets, set their weights, and view the portfolio performance over a specified date range.
 # To use the tool, you need to have an Infront account and API access. 
 # Write the following in your terminal to install the required packages and run the script:
 
-# pip install streamlit infrontconnect pandas plotly
+# python pip install streamlit infrontconnect pandas plotly
 # python streamlit run tool.py
 
 # Connect to Infront API
 infront.InfrontConnect(user="David.Lundberg.ipt", password="Infront2022!")  # Replace with your credentials
 
+# Map structure for assets and their associated indices
+ASSETS_INDICES_MAP = {
+    "NYS:BP": "NYS:BP",
+    "NYS:BRK.B": "NYS:BP",
+    "NYS:CAT": "NYS:BP",
+    "NYS:DIS": "NYS:BP"
+}
+
 # Fetch data function using Infront API
-def fetch_data_infront(tickers, start_date, end_date):
+def fetch_data_infront(tickers, index_tickers, start_date, end_date):
     try:
-        # Use Infront API to fetch historical data
+        # Use Infront API to fetch historical data for assets
         history = infront.GetHistory(
             tickers=tickers,
             fields=["last"],  # Fetching only 'last' price for simplicity
@@ -31,56 +39,49 @@ def fetch_data_infront(tickers, start_date, end_date):
         for ticker, df in history.items():
             df['Asset'] = ticker
             data_frames.append(df)
-        return pd.concat(data_frames)
+        
+        # Use Infront API to fetch historical data for indices
+        index_history = infront.GetHistory(
+            tickers=index_tickers,
+            fields=["last"],  # Fetching only 'last' price for simplicity
+            start_date=start_date.strftime('%Y-%m-%d'),
+            end_date=end_date.strftime('%Y-%m-%d')
+        )
+        index_data_frames = []
+        for ticker, df in index_history.items():
+            df['Index'] = ticker
+            index_data_frames.append(df)
+        
+        # Combine asset and index data
+        asset_data = pd.concat(data_frames)
+        index_data = pd.concat(index_data_frames)
+        return asset_data, index_data
     except Exception as e:
         st.error(f"Error fetching data: {e}")
-        return pd.DataFrame()
 
 # Streamlit app
-st.title("Portfolio Illustration Tool (Infront)")
+st.title("Portfolio Illustration Tool")
 
 # User input for selecting assets
-asset_list = ["NYS:BP", "NYS:BRK.B", "NYS:CAT", "NYS:DIS"]  # Example tickers
-selected_assets = st.multiselect("Select assets for the portfolio:", asset_list)
+ASSETS = list(ASSETS_INDICES_MAP.keys())
+selected_assets = st.multiselect("Select assets for the portfolio:", ASSETS)
 
-# User input for setting portfolio weights
-weights = {}
-if selected_assets:
-    st.subheader("Set portfolio weights")
-    for asset in selected_assets:
-        weight = st.slider(f"Weight for {asset} (%):", min_value=0, max_value=100, value=0, step=1)
-        weights[asset] = weight
+# Determine associated indices
+selected_indices = list({ASSETS_INDICES_MAP[asset] for asset in selected_assets})
 
-# User input for global area allocation
-regions = ["North America", "Europe", "Asia", "Other"]
-region_weights = {}
-st.subheader("Allocate portfolio weights by region")
-for region in regions:
-    region_weight = st.slider(f"Weight for {region} (%):", min_value=0, max_value=100, value=0, step=1)
-    region_weights[region] = region_weight
-
-# User input for date range
-st.subheader("Select date range for analysis")
 start_date = st.date_input("Start date", datetime(2020, 1, 1))
 end_date = st.date_input("End date", datetime.today())
 
-# Fetch and display data
+# Fetch data
 if st.button("Fetch Data"):
-    if sum(weights.values()) != 100:
-        st.error("Total weights must sum to 100%.")
-    elif sum(region_weights.values()) != 100:
-        st.error("Total region weights must sum to 100%.")
+    asset_data, index_data = fetch_data_infront(selected_assets, selected_indices, start_date, end_date)
+    
+    # Plot data
+    if not asset_data.empty and not index_data.empty:
+        fig = px.line(asset_data, x=asset_data.index, y="last", color="Asset", title="Asset and Index Prices")
+        for index in selected_indices:
+            index_df = index_data[index_data['Index'] == index]
+            fig.add_scatter(x=index_df.index, y=index_df['last'], mode='lines', name=index)
+        st.plotly_chart(fig)
     else:
-        data = fetch_data_infront(selected_assets, start_date, end_date)
-        if not data.empty:
-            st.write("Portfolio Data:", data.head())
-
-            # Create portfolio performance plot
-            data['Weighted Price'] = data['last'] * data['Asset'].map(weights) / 100
-            portfolio_performance = data.groupby(data.index)['Weighted Price'].sum()
-
-            fig = px.line(portfolio_performance, x=portfolio_performance.index, y=portfolio_performance.values,
-                          labels={"x": "Date", "y": "Portfolio Value"}, title="Portfolio Performance")
-            st.plotly_chart(fig)
-        else:
-            st.error("No data fetched.")
+        st.error("No data available for the selected tickers and date range.")
