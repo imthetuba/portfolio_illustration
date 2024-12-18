@@ -1,3 +1,5 @@
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 from InfrontConnect import infront
 import pandas as pd
 import streamlit as st
@@ -5,7 +7,7 @@ import plotly.express as px
 from datetime import datetime
 
 # Connect to Infront API
-infront.InfrontConnect(user="myuser", password="mypassword")  # Replace with your credentials
+infront.InfrontConnect(user="David.Lundberg.ipt", password="Infront2022!")  # Replace with your credentials
 
 # Fetch data function using Infront API
 def fetch_data_infront(tickers, start_date, end_date):
