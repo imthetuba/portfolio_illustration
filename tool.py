@@ -19,10 +19,12 @@ infront.InfrontConnect(user="David.Lundberg.ipt", password="Infront2022!")  # Re
 
 # Map structure for assets and their associated indices
 ASSETS_INDICES_MAP = {
-    "NYS:BP": "NYS:BP",
-    "NYS:BRK.B": "NYS:BP",
-    "NYS:CAT": "NYS:BP",
-    "NYS:DIS": "NYS:BP"
+    "NYS:BP": {"index": "NYS:BP", "type": "share"},
+    "NYS:BRK.B": {"index": "NYS:BP", "type": "share"},
+    "NYS:CAT": {"index": "NYS:BP", "type": "share"},
+    "NYS:DIS": {"index": "NYS:BP", "type": "share"},
+    "NYS:TLT": {"index": "NYS:BP", "type": "bond"},
+    "NYS:GLD": {"index": "GSCI", "type": "alternative"}
 }
 
 # Fetch data function using Infront API
@@ -37,7 +39,8 @@ def fetch_data_infront(tickers, index_tickers, start_date, end_date):
         )
         data_frames = []
         for ticker, df in history.items():
-            df['Asset'] = ticker
+            df['Type'] = 'Asset'
+            df['Name'] = ticker
             data_frames.append(df)
         
         # Use Infront API to fetch historical data for indices
@@ -49,13 +52,15 @@ def fetch_data_infront(tickers, index_tickers, start_date, end_date):
         )
         index_data_frames = []
         for ticker, df in index_history.items():
-            df['Index'] = ticker
+            df['Type'] = 'Index'
+            df['Name'] = ticker
             index_data_frames.append(df)
         
         # Combine asset and index data
         asset_data = pd.concat(data_frames)
         index_data = pd.concat(index_data_frames)
-        return asset_data, index_data
+        combined_data = pd.concat([asset_data, index_data])
+        return combined_data
     except Exception as e:
         st.error(f"Error fetching data: {e}")
 
@@ -67,21 +72,26 @@ ASSETS = list(ASSETS_INDICES_MAP.keys())
 selected_assets = st.multiselect("Select assets for the portfolio:", ASSETS)
 
 # Determine associated indices
-selected_indices = list({ASSETS_INDICES_MAP[asset] for asset in selected_assets})
+selected_indices = list({ASSETS_INDICES_MAP[asset]["index"] for asset in selected_assets})
+
+# Display selected asset types
+if selected_assets:
+    asset_types = {asset: ASSETS_INDICES_MAP[asset]["type"] for asset in selected_assets}
+    st.write("Selected Asset Types:", asset_types)
 
 start_date = st.date_input("Start date", datetime(2020, 1, 1))
 end_date = st.date_input("End date", datetime.today())
 
 # Fetch data
 if st.button("Fetch Data"):
-    asset_data, index_data = fetch_data_infront(selected_assets, selected_indices, start_date, end_date)
+    combined_data = fetch_data_infront(selected_assets, selected_indices, start_date, end_date)
+    
+    # Debug: Check if data is fetched correctly
+    st.write("Combined Data:", combined_data)
     
     # Plot data
-    if not asset_data.empty and not index_data.empty:
-        fig = px.line(asset_data, x=asset_data.index, y="last", color="Asset", title="Asset and Index Prices")
-        for index in selected_indices:
-            index_df = index_data[index_data['Index'] == index]
-            fig.add_scatter(x=index_df.index, y=index_df['last'], mode='lines', name=index)
+    if not combined_data.empty:
+        fig = px.line(combined_data, x=combined_data.index, y="last", color="Name", line_dash="Type", title="Asset and Index Prices")
         st.plotly_chart(fig)
     else:
         st.error("No data available for the selected tickers and date range.")
