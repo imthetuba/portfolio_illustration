@@ -73,11 +73,12 @@ def fetch_data_infront(tickers, index_tickers, start_date, end_date):
 def indexed_net_to_100(combined_data):
     # Calculate indexed net return to 100 for each asset, returns in percentages
 
-    combined_data = combined_data.assign(PeriodNetReturn = lambda x: x['last'] / x['last'].iloc[0] - 1) #get return from start date
+     # Calculate indexed net return to 100 for each asset
+    combined_data['Period Net Return'] = combined_data.groupby('Name')['last'].transform(lambda x: (x / x.iloc[0]) - 1)  # calculate percentage change from start
+    st.write("Period Net Return Data:", combined_data[['Name', 'last', 'Period Net Return']])  # Debug: Check values
     
-    # Debug: Check if data is written correctly
-    st.write("PNR Data:", combined_data)
-    combined_data = combined_data.assign(IndexedNetReturn = lambda x: (1 + x['PeriodNetReturn'])*100)
+    combined_data['Period Net Return'] = combined_data['Period Net Return'].fillna(0)  # Fill missing values with 0
+    combined_data['Indexed Net Return'] = combined_data.groupby('Name')['Period Net Return'].transform(lambda x: (1 + x) * 100) 
     return combined_data
 
 
