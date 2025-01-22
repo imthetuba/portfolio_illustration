@@ -52,7 +52,6 @@ def fetch_data_infront(tickers, index_tickers, start_date, end_date):
             start_date=start_date.strftime('%Y-%m-%d'),
             end_date=end_date.strftime('%Y-%m-%d')
         )
-        st.write("History Data:", history)  # Debug: Check values
         data_frames = []
         i = 0
         for ticker, df in history.items():
@@ -90,7 +89,6 @@ def indexed_net_to_100(combined_data):
 
      # Calculate indexed net return to 100 for each asset
     combined_data['Period Net Return'] = combined_data.groupby('Name')['last'].transform(lambda x: (x / x.iloc[0]) - 1)  # calculate percentage change from start
-    st.write("Period Net Return Data:", combined_data[['Name', 'last', 'Period Net Return']])  # Debug: Check values
     
     combined_data['Period Net Return'] = combined_data['Period Net Return'].fillna(0)  # Fill missing values with 0
     combined_data['Indexed Net Return'] = combined_data.groupby('Name')['Period Net Return'].transform(lambda x: (1 + x)) 
@@ -116,49 +114,79 @@ def indexed_OCG_adjusted_to_100(combined_data):
     combined_data['Indexed OCG Adjusted'] = combined_data.groupby('Name')['OCG Adjusted Period Change'].transform(lambda x: (1 + x).cumprod())
     return combined_data
 
+def create_portfolio(combined_data, weights, start_investment, allocation_limit):
+    combined_data['Weight'] = combined_data.apply(lambda row: weights[row['Name']], axis=1)
+    combined_data['Allocation'] = combined_data['Weight'] * start_investment
+    
+    # Initialize the total portfolio amount
+    total_portfolio_amounts = [0] * len(combined_data) # over allocing space, but it is fine for now
+    total_portfolio_amounts[0] = start_investment
+    total_portfolio_amounts_index = [0] * len(combined_data) # over allocing space, but it is fine for now
+    total_portfolio_amounts_index[0] = start_investment
+
+    # Group by 'Name' and apply the allocation and weight calculations
+    for name, group in combined_data.groupby('Name'):
+        for i in range(1, len(group)):
+            previous_allocation = group.iloc[i-1]['Allocation']
+            indexed_ocg_adjusted = group.iloc[i]['Indexed OCG Adjusted']
+            
+            adjusted_allocation_amount = previous_allocation * indexed_ocg_adjusted
+            
+            # Update the allocation
+            combined_data.loc[group.index[i], 'Allocation'] = adjusted_allocation_amount
+            
+            # Update the total portfolio amount
+            if group.iloc[i]['Type'] == 'Asset':
+                total_portfolio_amounts[i] = total_portfolio_amounts[i] + adjusted_allocation_amount
+            else:
+                total_portfolio_amounts_index[i] = total_portfolio_amounts_index[i] + adjusted_allocation_amount
+
+
+        for i in range(1, len(group)):
+            # Update the weight when the individul alloations have been updated
+            combined_data.loc[group.index[i], 'Weight'] = combined_data.loc[group.index[i], 'Allocation'] / total_portfolio_amounts[i]
+
+
+    return combined_data, total_portfolio_amounts, total_portfolio_amounts_index
 
 def main():
     # Streamlit app
     st.title("Portfolio Illustration Tool")    
+    combined_data = pd.DataFrame()
 
     selected_assets = st.multiselect("Select assets for the portfolio:", ASSETS)
 
     # Determine associated indices
     selected_indices = list({ASSETS_INDICES_MAP[asset]["index"] for asset in selected_assets})
 
-    # Display selected asset types
-    if selected_assets:
-        asset_types = {asset: ASSETS_INDICES_MAP[asset]["type"] for asset in selected_assets}
-        st.write("Selected Asset Types:", asset_types)
 
     start_date = st.date_input("Start date", datetime(2020, 1, 1))
     end_date = st.date_input("End date", datetime.today())
         
     # Fetch data
-    if st.button("Fetch Data"):
+    if st.button("Fetch Data") and selected_assets:
         combined_data = fetch_data_infront(selected_assets, selected_indices, start_date, end_date)
-        # Debug: Check if data is fetched correctly
-        #st.write("Combined Data:", combined_data)
-        # calculate inedexed net return to 100 for each asset    
+
         combined_data = indexed_net_to_100(combined_data)
-        # Debug: Check if data is written correctly
-        #st.write("Indexed Data:", combined_data)
-
         combined_data = period_change(combined_data)
-        # Debug: Check if data is written correctly
-        #st.write("Period Change Data:", combined_data)
-
         combined_data = OCG_adjusted_Period_Change(combined_data)
-        #st.write("OCG Adjusted Period Change Data:", combined_data)
-
         combined_data = indexed_OCG_adjusted_to_100(combined_data)
+
+        # Store combined_data in session state
+        st.session_state['combined_data'] = combined_data
+
+    if 'combined_data' in st.session_state:
+        combined_data = st.session_state['combined_data']
         st.write("Indexed OCG Adjusted Data:", combined_data)
+    else:
+        combined_data = None
 
     # User input for selecting weights
     weights = {}
     for asset in selected_assets:
         weight = st.number_input(f"Weight for {asset}", min_value=0.0, max_value=1.0, value=0.1)
         weights[asset] = weight
+        weights[ASSETS_INDICES_MAP[asset]['index']] = weight #the weight for the index is the same as the asset
 
     # Check if weights add up to 1
     if sum(weights.values()) != 1.0:
@@ -169,12 +197,16 @@ def main():
     allocation_limit = st.number_input("Allocation Limit (%)", min_value=0.0, max_value=100.0, value=7.0)
 
     # Button to create portfolio outputs
-    if st.button("Create Portfolio Outputs"):
+    if st.button("Create Portfolio Outputs") and combined_data is not None:
         # Implement the logic to create portfolio outputs based on the inputs
         st.write(f"Start Investment Amount: {start_investment}")
         st.write(f"Allocation Limit: {allocation_limit}%")
-        # Add more logic here to generate and display the portfolio outputs
 
+
+        combined_data, total_portfolio_amounts, total_portfolio_amounts_index = create_portfolio(combined_data, weights, start_investment, allocation_limit)
+        st.write("Portfolio Data:", combined_data)
+        st.write("Total Portfolio Amounts:", total_portfolio_amounts)
+        st.write("Total Portfolio Amounts Index:", total_portfolio_amounts_index)
 
 
 if __name__=="__main__":
