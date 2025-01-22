@@ -81,6 +81,11 @@ def indexed_net_to_100(combined_data):
     combined_data['Indexed Net Return'] = combined_data.groupby('Name')['Period Net Return'].transform(lambda x: (1 + x) * 100) 
     return combined_data
 
+def period_change(combined_data):
+    # Calculate period change fron Indexed Net Return for each asset, returns in percentages
+    combined_data['Period Change'] = combined_data.groupby('Name')['Indexed Net Return'].transform(lambda x: x.pct_change() * 100)  # calculate percentage change from previous period
+    combined_data['Period Change'] = combined_data['Period Change'].fillna(0)  # Fill missing values with 0
+    return combined_data
 
 def main():
     # Streamlit app
@@ -117,6 +122,10 @@ def main():
         combined_data = indexed_net_to_100(combined_data)
         # Debug: Check if data is written correctly
         st.write("Indexed Data:", combined_data)
+
+        combined_data = period_change(combined_data)
+        # Debug: Check if data is written correctly
+        st.write("Period Change Data:", combined_data)
 
 
 
