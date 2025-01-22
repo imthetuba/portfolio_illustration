@@ -116,36 +116,39 @@ def indexed_OCG_adjusted_to_100(combined_data):
 
 def create_portfolio(combined_data, weights, start_investment, allocation_limit):
     combined_data['Weight'] = combined_data.apply(lambda row: weights[row['Name']], axis=1)
-    combined_data['Allocation'] = combined_data['Weight'] * start_investment
+    combined_data['Holdnings'] = combined_data['Weight'] * start_investment
     
     # Initialize the total portfolio amount
-    total_portfolio_amounts = [0] * len(combined_data) # over allocing space, but it is fine for now
+    group_length = combined_data.groupby('Name').size().max()
+    total_portfolio_amounts = [0] * group_length # over allocing space, but it is fine for now
     total_portfolio_amounts[0] = start_investment
-    total_portfolio_amounts_index = [0] * len(combined_data) # over allocing space, but it is fine for now
+    total_portfolio_amounts_index = [0] * group_length # over allocing space, but it is fine for now
     total_portfolio_amounts_index[0] = start_investment
 
-    # Group by 'Name' and apply the allocation and weight calculations
+    # Group by 'Name' and apply the Holdnings and weight calculations
     for name, group in combined_data.groupby('Name'):
         for i in range(1, len(group)):
-            previous_allocation = group.iloc[i-1]['Allocation']
+            previous_Holdnings = group.iloc[i-1]['Holdnings']
             indexed_ocg_adjusted = group.iloc[i]['Indexed OCG Adjusted']
             
-            adjusted_allocation_amount = previous_allocation * indexed_ocg_adjusted
+            adjusted_Holdnings_amount = previous_Holdnings * indexed_ocg_adjusted
             
-            # Update the allocation
-            combined_data.loc[group.index[i], 'Allocation'] = adjusted_allocation_amount
+            # Update the Holdnings
+            combined_data.loc[group.index[i], 'Holdnings'] = adjusted_Holdnings_amount
             
             # Update the total portfolio amount
             if group.iloc[i]['Type'] == 'Asset':
-                total_portfolio_amounts[i] = total_portfolio_amounts[i] + adjusted_allocation_amount
+                total_portfolio_amounts[i] = total_portfolio_amounts[i] + adjusted_Holdnings_amount
             else:
-                total_portfolio_amounts_index[i] = total_portfolio_amounts_index[i] + adjusted_allocation_amount
-
-
+                total_portfolio_amounts_index[i] = total_portfolio_amounts_index[i] + adjusted_Holdnings_amount
+    st.write("Combined Data:", combined_data)
+    for name, group in combined_data.groupby('Name'):
         for i in range(1, len(group)):
-            # Update the weight when the individul alloations have been updated
-            combined_data.loc[group.index[i], 'Weight'] = combined_data.loc[group.index[i], 'Allocation'] / total_portfolio_amounts[i]
-
+            # Update the weight when the individul alloations have been updated for all groups, its not super efficient but all allocations have to be updated before the weigths are
+            if group.iloc[i]['Type'] == 'Asset':
+                combined_data.loc[group.index[i], 'Weight'] = combined_data.loc[group.index[i], 'Holdnings'] / total_portfolio_amounts[i]
+            else:
+                combined_data.loc[group.index[i], 'Weight'] = combined_data.loc[group.index[i], 'Holdnings'] / total_portfolio_amounts_index[i]
 
     return combined_data, total_portfolio_amounts, total_portfolio_amounts_index
 
@@ -189,7 +192,7 @@ def main():
         weights[ASSETS_INDICES_MAP[asset]['index']] = weight #the weight for the index is the same as the asset
 
     # Check if weights add up to 1
-    if sum(weights.values()) != 1.0:
+    if sum(weights.values()) != 2.0: # double because of the index
         st.error("The weights must add up to 1. Please adjust the weights.")
 
     # User input for start investment amount and allocation limit
