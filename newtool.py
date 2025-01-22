@@ -26,7 +26,7 @@ PERIOD = 252
 ASSETS_INDICES_MAP = {
     "NYS:BP": {"index": "NYS:BP", "type": "share", "OGC ex. post": 0.001 },
     "NYS:BRK.B": {"index": "NYS:BP", "type": "share", "OGC ex. post": 0.002},
-    "NYS:CAT": {"index": "NYS:BP", "type": "share", "OGC ex. post": 0.003},
+    "NYS:CAT": {"index": "NYS:BP", "type": "share", "OGC ex. post": 0.01},
     "NYS:DIS": {"index": "NYS:BP", "type": "share", "OGC ex. post": 0.004},
     "NYS:TLT": {"index": "NYS:BP", "type": "bond", "OGC ex. post": 0.005},
     "NYS:GLD": {"index": "GSCI", "type": "alternative", "OGC ex. post": 0.01}
@@ -96,8 +96,10 @@ def period_change(combined_data):
 
 
 def OCG_adjusted_Period_Change(combined_data):
+    # Calculate OCG adjusted period change for each asset, returns in percentages
     combined_data['OCG Adjusted Period Change'] = combined_data.apply(
-        lambda row: row['Period Change'] - ASSETS_INDICES_MAP[row['Name']]["OGC ex. post"]/PERIOD, axis=1)
+        lambda row: row['Period Change'] + ASSETS_INDICES_MAP[row['Name']]["OGC ex. post"]/PERIOD, axis=1)
+    
     combined_data['OCG Adjusted Period Change'] = combined_data['OCG Adjusted Period Change'].fillna(0)  # Fill missing values with 0
     return combined_data
 
