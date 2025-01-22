@@ -21,13 +21,15 @@ infront.InfrontConnect(user="David.Lundberg.ipt", password="Infront2022!")  # Re
 
 
 # Map structure for assets and their associated indices
+# Index has no OGC ex. post value, so it is set to 0. It is PER YEAR so divided by period later
+PERIOD = 252
 ASSETS_INDICES_MAP = {
-    "NYS:BP": {"index": "NYS:BP", "type": "share"},
-    "NYS:BRK.B": {"index": "NYS:BP", "type": "share"},
-    "NYS:CAT": {"index": "NYS:BP", "type": "share"},
-    "NYS:DIS": {"index": "NYS:BP", "type": "share"},
-    "NYS:TLT": {"index": "NYS:BP", "type": "bond"},
-    "NYS:GLD": {"index": "GSCI", "type": "alternative"}
+    "NYS:BP": {"index": "NYS:BP", "type": "share", "OGC ex. post": 0.001 },
+    "NYS:BRK.B": {"index": "NYS:BP", "type": "share", "OGC ex. post": 0.002},
+    "NYS:CAT": {"index": "NYS:BP", "type": "share", "OGC ex. post": 0.003},
+    "NYS:DIS": {"index": "NYS:BP", "type": "share", "OGC ex. post": 0.004},
+    "NYS:TLT": {"index": "NYS:BP", "type": "bond", "OGC ex. post": 0.005},
+    "NYS:GLD": {"index": "GSCI", "type": "alternative", "OGC ex. post": 0.01}
 }
 ASSETS = list(ASSETS_INDICES_MAP.keys())
 
@@ -42,10 +44,13 @@ def fetch_data_infront(tickers, index_tickers, start_date, end_date):
             start_date=start_date.strftime('%Y-%m-%d'),
             end_date=end_date.strftime('%Y-%m-%d')
         )
+        st.write("History Data:", history)  # Debug: Check values
         data_frames = []
+        i = 0
         for ticker, df in history.items():
             df['Type'] = 'Asset'
-            df['Name'] = ticker
+            df['Name'] = tickers[i] #stupid solution to get name as the gethistory function does not return the name the same way
+            i = i + 1
             data_frames.append(df)
         
         # Use Infront API to fetch historical data for indices
@@ -56,9 +61,11 @@ def fetch_data_infront(tickers, index_tickers, start_date, end_date):
             end_date=end_date.strftime('%Y-%m-%d')
         )
         index_data_frames = []
+        i=0
         for ticker, df in index_history.items():
             df['Type'] = 'Index'
-            df['Name'] = ticker
+            df['Name'] = index_tickers[i]
+            i = i + 1
             index_data_frames.append(df)
         
         # Combine asset and index data
@@ -85,6 +92,13 @@ def period_change(combined_data):
     # Calculate period change fron Indexed Net Return for each asset, returns in percentages
     combined_data['Period Change'] = combined_data.groupby('Name')['Indexed Net Return'].transform(lambda x: x.pct_change() * 100)  # calculate percentage change from previous period
     combined_data['Period Change'] = combined_data['Period Change'].fillna(0)  # Fill missing values with 0
+    return combined_data
+
+
+def OCG_adjusted_Period_Change(combined_data):
+    combined_data['OCG Adjusted Period Change'] = combined_data.apply(
+        lambda row: row['Period Change'] - ASSETS_INDICES_MAP[row['Name']]["OGC ex. post"]/PERIOD, axis=1)
+    combined_data['OCG Adjusted Period Change'] = combined_data['OCG Adjusted Period Change'].fillna(0)  # Fill missing values with 0
     return combined_data
 
 def main():
@@ -126,6 +140,9 @@ def main():
         combined_data = period_change(combined_data)
         # Debug: Check if data is written correctly
         st.write("Period Change Data:", combined_data)
+
+        combined_data = OCG_adjusted_Period_Change(combined_data)
+        st.write("OCG Adjusted Period Change Data:", combined_data)
 
 
 
