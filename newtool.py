@@ -78,30 +78,36 @@ def fetch_data_infront(tickers, index_tickers, start_date, end_date):
 
 
 def indexed_net_to_100(combined_data):
-    # Calculate indexed net return to 100 for each asset, returns in percentages
+    # Calculate indexed net return to 100 for each asset
 
      # Calculate indexed net return to 100 for each asset
     combined_data['Period Net Return'] = combined_data.groupby('Name')['last'].transform(lambda x: (x / x.iloc[0]) - 1)  # calculate percentage change from start
     st.write("Period Net Return Data:", combined_data[['Name', 'last', 'Period Net Return']])  # Debug: Check values
     
     combined_data['Period Net Return'] = combined_data['Period Net Return'].fillna(0)  # Fill missing values with 0
-    combined_data['Indexed Net Return'] = combined_data.groupby('Name')['Period Net Return'].transform(lambda x: (1 + x) * 100) 
+    combined_data['Indexed Net Return'] = combined_data.groupby('Name')['Period Net Return'].transform(lambda x: (1 + x)) 
     return combined_data
 
 def period_change(combined_data):
-    # Calculate period change fron Indexed Net Return for each asset, returns in percentages
-    combined_data['Period Change'] = combined_data.groupby('Name')['Indexed Net Return'].transform(lambda x: x.pct_change() * 100)  # calculate percentage change from previous period
+    # Calculate period change fron Indexed Net Return for each asset
+    combined_data['Period Change'] = combined_data.groupby('Name')['Indexed Net Return'].transform(lambda x: x.pct_change())  # calculate percentage change from previous period
     combined_data['Period Change'] = combined_data['Period Change'].fillna(0)  # Fill missing values with 0
     return combined_data
 
 
 def OCG_adjusted_Period_Change(combined_data):
-    # Calculate OCG adjusted period change for each asset, returns in percentages
+    # Calculate OCG adjusted period change for each asset
     combined_data['OCG Adjusted Period Change'] = combined_data.apply(
-        lambda row: row['Period Change'] + ASSETS_INDICES_MAP[row['Name']]["OGC ex. post"]/PERIOD, axis=1)
+        lambda row: row['Period Change'] - ASSETS_INDICES_MAP[row['Name']]["OGC ex. post"]/PERIOD, axis=1)
     
     combined_data['OCG Adjusted Period Change'] = combined_data['OCG Adjusted Period Change'].fillna(0)  # Fill missing values with 0
     return combined_data
+
+def indexed_OCG_adjusted_to_100(combined_data):
+    # Calculate indexed OCG adjusted net return to 100 for each asset
+    combined_data['Indexed OCG Adjusted'] = combined_data.groupby('Name')['OCG Adjusted Period Change'].transform(lambda x: (1 + x).cumprod())
+    return combined_data
+
 
 def main():
     # Streamlit app
@@ -145,6 +151,9 @@ def main():
 
         combined_data = OCG_adjusted_Period_Change(combined_data)
         st.write("OCG Adjusted Period Change Data:", combined_data)
+
+        combined_data = indexed_OCG_adjusted_to_100(combined_data)
+        st.write("Indexed OCG Adjusted Data:", combined_data)
 
 
 
