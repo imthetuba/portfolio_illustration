@@ -15,9 +15,17 @@ from datetime import datetime
 
 # python pip install streamlit infrontconnect pandas plotly
 # python streamlit run tool.py
+# Prompt for username and password
+#username = st.text_input("Enter your Infront username:")
+#password = st.text_input("Enter your Infront password:", type="password")
 
+
+#if username and password:
+#    infront.InfrontConnect(user=username, password=password)  # Use the provided credentials
+#else:
+#    st.warning("Please enter your Infront username and password to continue.")
 # Connect to Infront API
-infront.InfrontConnect(user="David.Lundberg.ipt", password="Infront2022!")  # Replace with your credentials
+infront.InfrontConnect(user="David.Lundberg.ipt", password="Infront2022!") 
 
 
 # Map structure for assets and their associated indices
@@ -112,6 +120,7 @@ def indexed_OCG_adjusted_to_100(combined_data):
 def main():
     # Streamlit app
     st.title("Portfolio Illustration Tool")    
+
     selected_assets = st.multiselect("Select assets for the portfolio:", ASSETS)
 
     # Determine associated indices
@@ -121,6 +130,29 @@ def main():
     if selected_assets:
         asset_types = {asset: ASSETS_INDICES_MAP[asset]["type"] for asset in selected_assets}
         st.write("Selected Asset Types:", asset_types)
+
+    start_date = st.date_input("Start date", datetime(2020, 1, 1))
+    end_date = st.date_input("End date", datetime.today())
+        
+    # Fetch data
+    if st.button("Fetch Data"):
+        combined_data = fetch_data_infront(selected_assets, selected_indices, start_date, end_date)
+        # Debug: Check if data is fetched correctly
+        #st.write("Combined Data:", combined_data)
+        # calculate inedexed net return to 100 for each asset    
+        combined_data = indexed_net_to_100(combined_data)
+        # Debug: Check if data is written correctly
+        #st.write("Indexed Data:", combined_data)
+
+        combined_data = period_change(combined_data)
+        # Debug: Check if data is written correctly
+        #st.write("Period Change Data:", combined_data)
+
+        combined_data = OCG_adjusted_Period_Change(combined_data)
+        #st.write("OCG Adjusted Period Change Data:", combined_data)
+
+        combined_data = indexed_OCG_adjusted_to_100(combined_data)
+        st.write("Indexed OCG Adjusted Data:", combined_data)
 
     # User input for selecting weights
     weights = {}
@@ -132,29 +164,16 @@ def main():
     if sum(weights.values()) != 1.0:
         st.error("The weights must add up to 1. Please adjust the weights.")
 
-    start_date = st.date_input("Start date", datetime(2020, 1, 1))
-    end_date = st.date_input("End date", datetime.today())
-        
-    # Fetch data
-    if st.button("Fetch Data") and sum(weights.values()) == 1.0:
-        combined_data = fetch_data_infront(selected_assets, selected_indices, start_date, end_date)
-        # Debug: Check if data is fetched correctly
-        st.write("Combined Data:", combined_data)
-        # calculate inedexed net return to 100 for each asset    
-        combined_data = indexed_net_to_100(combined_data)
-        # Debug: Check if data is written correctly
-        st.write("Indexed Data:", combined_data)
+    # User input for start investment amount and allocation limit
+    start_investment = st.number_input("Start Investment Amount", min_value=0.0, value=100000.0)
+    allocation_limit = st.number_input("Allocation Limit (%)", min_value=0.0, max_value=100.0, value=7.0)
 
-        combined_data = period_change(combined_data)
-        # Debug: Check if data is written correctly
-        st.write("Period Change Data:", combined_data)
-
-        combined_data = OCG_adjusted_Period_Change(combined_data)
-        st.write("OCG Adjusted Period Change Data:", combined_data)
-
-        combined_data = indexed_OCG_adjusted_to_100(combined_data)
-        st.write("Indexed OCG Adjusted Data:", combined_data)
-
+    # Button to create portfolio outputs
+    if st.button("Create Portfolio Outputs"):
+        # Implement the logic to create portfolio outputs based on the inputs
+        st.write(f"Start Investment Amount: {start_investment}")
+        st.write(f"Allocation Limit: {allocation_limit}%")
+        # Add more logic here to generate and display the portfolio outputs
 
 
 
