@@ -119,10 +119,31 @@ def indexed_OGC_adjusted_to_100(combined_data):
     combined_data['Indexed OGC Adjusted'] = combined_data.groupby('Name')['OGC Adjusted Period Change'].transform(lambda x: (1 + x).cumprod())
     return combined_data
 
-def create_portfolio(combined_data, weights, start_investment, allocation_limit):
+def clean_data(combined_data):
+    # Identify common dates across all groups
     # Ensure the date is a column
     if 'date' not in combined_data.columns:
         combined_data = combined_data.reset_index()
+
+    # Find common dates across all groups
+    common_dates = combined_data.groupby('Name')['date'].apply(set).agg(lambda x: set.intersection(*x))
+
+    # Convert the result to a DataFrame
+    common_dates = pd.DataFrame(list(common_dates), columns=['date'])
+
+    # Filter the combined_data to include only common dates
+    combined_data = combined_data[combined_data['date'].isin(common_dates['date'])]
+    
+    return combined_data
+
+def find_breach(combined_data, allocation_limit, weights):
+    # Find breaches in allocation limit
+    breaches = combined_data.apply(
+        lambda row: (row['Weight'] > weights[row['Name']] + allocation_limit / 100) or 
+                    (row['Weight'] < weights[row['Name']] - allocation_limit / 100), axis=1)
+    return breaches
+
+def create_portfolio(combined_data, weights, start_investment, allocation_limit):
 
     combined_data['Weight'] = combined_data.apply(lambda row: weights[row['Name']], axis=1)
     combined_data['Holdnings'] = combined_data['Weight'] * start_investment
@@ -139,8 +160,6 @@ def create_portfolio(combined_data, weights, start_investment, allocation_limit)
     # Calculate the total holdings for each date and asset or index
     date_holdings_map = combined_data.groupby(['date', 'Type'])['Holdnings'].sum().unstack().to_dict()
 
-    # Filter out NaNs from the date_holdings_map
-    date_holdings_map = {date: {k: v for k, v in type_map.items() if pd.notna(v)} for date, type_map in date_holdings_map.items() if pd.notna(date)}
     
     # Calculate the adjusted weights
     for index, row in combined_data.iterrows():
@@ -152,7 +171,14 @@ def create_portfolio(combined_data, weights, start_investment, allocation_limit)
                 combined_data.at[index, 'Weight'] = row['Holdnings'] / total_holdings
 
 
-    return combined_data, date_holdings_map
+    date_holdings_df = pd.DataFrame.from_dict(date_holdings_map, orient='index').reset_index()
+    date_holdings_df = date_holdings_df.melt(id_vars=['index'], var_name='Type', value_name='Total Holdings')
+    date_holdings_df.columns = ['Type', 'Date', 'Total Holdings']
+
+    breaches = find_breach(combined_data, allocation_limit, weights)
+    st.write("Breaches:", breaches)
+
+    return combined_data, date_holdings_df
 
 
 
@@ -174,7 +200,7 @@ def main():
     # Fetch data
     if st.button("Fetch Data") and selected_assets:
         combined_data = fetch_data_infront(selected_assets, selected_indices, start_date, end_date)
-
+        combined_data = clean_data(combined_data)
         combined_data = indexed_net_to_100(combined_data)
         combined_data = period_change(combined_data)
         combined_data = OGC_adjusted_Period_Change(combined_data)
@@ -211,9 +237,10 @@ def main():
         st.write(f"Allocation Limit: {allocation_limit}%")
 
 
-        combined_data, date_holdings_map  = create_portfolio(combined_data, weights, start_investment, allocation_limit)
+        combined_data, date_holdings_df  = create_portfolio(combined_data, weights, start_investment, allocation_limit)
         st.write("Portfolio Data:", combined_data)
-        st.write("Date Total Holdings Map:", date_holdings_map)
+        st.write("Date vs Total Holdings:", date_holdings_df)
+
 
 
 if __name__=="__main__":
