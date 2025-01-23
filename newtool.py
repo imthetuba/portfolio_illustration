@@ -101,17 +101,17 @@ def period_change(combined_data):
     return combined_data
 
 
-def OCG_adjusted_Period_Change(combined_data):
-    # Calculate OCG adjusted period change for each asset
-    combined_data['OCG Adjusted Period Change'] = combined_data.apply(
+def OGC_adjusted_Period_Change(combined_data):
+    # Calculate OGC adjusted period change for each asset
+    combined_data['OGC Adjusted Period Change'] = combined_data.apply(
         lambda row: row['Period Change'] - ASSETS_INDICES_MAP[row['Name']]["OGC ex. post"]/PERIOD, axis=1)
     
-    combined_data['OCG Adjusted Period Change'] = combined_data['OCG Adjusted Period Change'].fillna(0)  # Fill missing values with 0
+    combined_data['OGC Adjusted Period Change'] = combined_data['OGC Adjusted Period Change'].fillna(0)  # Fill missing values with 0
     return combined_data
 
-def indexed_OCG_adjusted_to_100(combined_data):
-    # Calculate indexed OCG adjusted net return to 100 for each asset
-    combined_data['Indexed OCG Adjusted'] = combined_data.groupby('Name')['OCG Adjusted Period Change'].transform(lambda x: (1 + x).cumprod())
+def indexed_OGC_adjusted_to_100(combined_data):
+    # Calculate indexed OGC adjusted net return to 100 for each asset
+    combined_data['Indexed OGC Adjusted'] = combined_data.groupby('Name')['OGC Adjusted Period Change'].transform(lambda x: (1 + x).cumprod())
     return combined_data
 
 def create_portfolio(combined_data, weights, start_investment, allocation_limit):
@@ -129,9 +129,9 @@ def create_portfolio(combined_data, weights, start_investment, allocation_limit)
     for name, group in combined_data.groupby('Name'):
         for i in range(1, len(group)):
             previous_Holdnings = group.iloc[i-1]['Holdnings']
-            indexed_ocg_adjusted = group.iloc[i]['Indexed OCG Adjusted']
+            indexed_OGC_adjusted = group.iloc[i]['Indexed OGC Adjusted']
             
-            adjusted_Holdnings_amount = previous_Holdnings * indexed_ocg_adjusted
+            adjusted_Holdnings_amount = previous_Holdnings * indexed_OGC_adjusted
             
             # Update the Holdnings
             combined_data.loc[group.index[i], 'Holdnings'] = adjusted_Holdnings_amount
@@ -172,15 +172,15 @@ def main():
 
         combined_data = indexed_net_to_100(combined_data)
         combined_data = period_change(combined_data)
-        combined_data = OCG_adjusted_Period_Change(combined_data)
-        combined_data = indexed_OCG_adjusted_to_100(combined_data)
+        combined_data = OGC_adjusted_Period_Change(combined_data)
+        combined_data = indexed_OGC_adjusted_to_100(combined_data)
 
         # Store combined_data in session state
         st.session_state['combined_data'] = combined_data
 
     if 'combined_data' in st.session_state:
         combined_data = st.session_state['combined_data']
-        st.write("Indexed OCG Adjusted Data:", combined_data)
+        st.write("Indexed OGC Adjusted Data:", combined_data)
     else:
         combined_data = None
 
