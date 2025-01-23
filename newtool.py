@@ -32,9 +32,9 @@ infront.InfrontConnect(user="David.Lundberg.ipt", password="Infront2022!")
 # Index has no OGC ex. post value, so it is set to 0. It is PER YEAR so divided by period later
 PERIOD = 252
 ASSETS_INDICES_MAP = {
-    "NYS:BP": {"index": "NYS:BP", "type": "share", "OGC ex. post": 0.001 },
+    "SSF:62022": {"index": "MSCI:127306PSEK", "type": "share", "OGC ex. post": 0.001 },
     "NYS:BRK.B": {"index": "NYS:BP", "type": "share", "OGC ex. post": 0.002},
-    "NYS:CAT": {"index": "NYS:BP", "type": "share", "OGC ex. post": 0.01},
+    "NYS:CAT": {"index": "NYS:BRK.B", "type": "share", "OGC ex. post": 0.01},
     "NYS:DIS": {"index": "NYS:BP", "type": "share", "OGC ex. post": 0.004},
     "NYS:TLT": {"index": "NYS:BP", "type": "bond", "OGC ex. post": 0.005},
     "NYS:GLD": {"index": "GSCI", "type": "alternative", "OGC ex. post": 0.01}
@@ -52,6 +52,7 @@ def fetch_data_infront(tickers, index_tickers, start_date, end_date):
             start_date=start_date.strftime('%Y-%m-%d'),
             end_date=end_date.strftime('%Y-%m-%d')
         )
+        st.write(history)
         data_frames = []
         i = 0
         for ticker, df in history.items():
@@ -103,9 +104,13 @@ def period_change(combined_data):
 
 def OGC_adjusted_Period_Change(combined_data):
     # Calculate OGC adjusted period change for each asset
-    combined_data['OGC Adjusted Period Change'] = combined_data.apply(
-        lambda row: row['Period Change'] - ASSETS_INDICES_MAP[row['Name']]["OGC ex. post"]/PERIOD, axis=1)
+    def calculate_adjusted_period_change(row):
+        if row['Type'] == 'Index':
+            return row['Period Change'] # Index has no OGC ex. post value
+        else:
+            return row['Period Change'] - ASSETS_INDICES_MAP[row['Name']]["OGC ex. post"] / PERIOD
     
+    combined_data['OGC Adjusted Period Change'] = combined_data.apply(calculate_adjusted_period_change, axis=1)
     combined_data['OGC Adjusted Period Change'] = combined_data['OGC Adjusted Period Change'].fillna(0)  # Fill missing values with 0
     return combined_data
 
@@ -115,46 +120,46 @@ def indexed_OGC_adjusted_to_100(combined_data):
     return combined_data
 
 def create_portfolio(combined_data, weights, start_investment, allocation_limit):
+    # Ensure the date is a column
+    if 'date' not in combined_data.columns:
+        combined_data = combined_data.reset_index()
+
     combined_data['Weight'] = combined_data.apply(lambda row: weights[row['Name']], axis=1)
     combined_data['Holdnings'] = combined_data['Weight'] * start_investment
     
-    # Initialize the total portfolio amount
-    group_length = combined_data.groupby('Name').size().max()
-    total_portfolio_amounts = [0] * group_length # over allocing space, but it is fine for now
-    total_portfolio_amounts[0] = start_investment
-    total_portfolio_amounts_index = [0] * group_length # over allocing space, but it is fine for now
-    total_portfolio_amounts_index[0] = start_investment
+    # Calculate the adjusted holdings using cumulative product
+    def calculate_adjusted_holdings(group):
+        group = group.copy()
+        group['Holdnings'] = group['Holdnings'].iloc[0] * (1 + group['OGC Adjusted Period Change']).cumprod()
+        return group
+    
+    # Calculate the adjusted holdings for each row
+    combined_data = combined_data.groupby('Name').apply(calculate_adjusted_holdings).reset_index(level=0, drop=True)
+    
+    # Calculate the total holdings for each date and asset or index
+    date_holdings_map = combined_data.groupby(['date', 'Type'])['Holdnings'].sum().unstack().to_dict()
 
-    # Group by 'Name' and apply the Holdnings and weight calculations
-    for name, group in combined_data.groupby('Name'):
-        for i in range(1, len(group)):
-            previous_Holdnings = group.iloc[i-1]['Holdnings']
-            indexed_OGC_adjusted = group.iloc[i]['Indexed OGC Adjusted']
-            
-            adjusted_Holdnings_amount = previous_Holdnings * indexed_OGC_adjusted
-            
-            # Update the Holdnings
-            combined_data.loc[group.index[i], 'Holdnings'] = adjusted_Holdnings_amount
-            
-            # Update the total portfolio amount
-            if group.iloc[i]['Type'] == 'Asset':
-                total_portfolio_amounts[i] = total_portfolio_amounts[i] + adjusted_Holdnings_amount
-            else:
-                total_portfolio_amounts_index[i] = total_portfolio_amounts_index[i] + adjusted_Holdnings_amount
-    st.write("Combined Data:", combined_data)
-    for name, group in combined_data.groupby('Name'):
-        for i in range(1, len(group)):
-            # Update the weight when the individul alloations have been updated for all groups, its not super efficient but all allocations have to be updated before the weigths are
-            if group.iloc[i]['Type'] == 'Asset':
-                combined_data.loc[group.index[i], 'Weight'] = combined_data.loc[group.index[i], 'Holdnings'] / total_portfolio_amounts[i]
-            else:
-                combined_data.loc[group.index[i], 'Weight'] = combined_data.loc[group.index[i], 'Holdnings'] / total_portfolio_amounts_index[i]
+    # Filter out NaNs from the date_holdings_map
+    date_holdings_map = {date: {k: v for k, v in type_map.items() if pd.notna(v)} for date, type_map in date_holdings_map.items() if pd.notna(date)}
+    
+    # Calculate the adjusted weights
+    for index, row in combined_data.iterrows():
+        date = row['date']
+        type_ = row['Type']
+        if type_ in date_holdings_map and date in date_holdings_map[type_]:
+            total_holdings = date_holdings_map[type_][date]
+            if total_holdings != 0:
+                combined_data.at[index, 'Weight'] = row['Holdnings'] / total_holdings
 
-    return combined_data, total_portfolio_amounts, total_portfolio_amounts_index
+
+    return combined_data, date_holdings_map
+
+
+
 
 def main():
     # Streamlit app
-    st.title("Portfolio Illustration Tool")    
+    st.title("OGC adjusted Portfolio Illustration Tool")    
     combined_data = pd.DataFrame()
 
     selected_assets = st.multiselect("Select assets for the portfolio:", ASSETS)
@@ -206,10 +211,9 @@ def main():
         st.write(f"Allocation Limit: {allocation_limit}%")
 
 
-        combined_data, total_portfolio_amounts, total_portfolio_amounts_index = create_portfolio(combined_data, weights, start_investment, allocation_limit)
+        combined_data, date_holdings_map  = create_portfolio(combined_data, weights, start_investment, allocation_limit)
         st.write("Portfolio Data:", combined_data)
-        st.write("Total Portfolio Amounts:", total_portfolio_amounts)
-        st.write("Total Portfolio Amounts Index:", total_portfolio_amounts_index)
+        st.write("Date Total Holdings Map:", date_holdings_map)
 
 
 if __name__=="__main__":
