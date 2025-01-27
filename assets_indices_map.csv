@@ -1,7 +1,26 @@
 asset,index,display_name,index_name,type,OGC_ex_post,category
-SSF:62022,MSCI:127306PSEK,Storebrand Global All Countries,MSCI ACWI NR Sek,share,0.0314,Global Shares
-NYS:BRK.B,NYS:BP,Berkshire Hathaway Inc.,Berkshire Hathaway Index,share,0.002,US Shares
-NYS:CAT,NYS:BRK.B,Caterpillar Inc.,Caterpillar Index,share,0.01,US Shares
-NYS:DIS,NYS:BP,The Walt Disney Company,Disney Index,share,0.004,US Shares
-NYS:TLT,NYS:BP,iShares 20+ Year Treasury Bond ETF,Treasury Bond Index,bond,0.005,US Bonds
-NYS:GLD,GSCI,SPDR Gold Shares,Gold Index,alternative,0.01,Commodities
+SSF:62022,MSCI:127306P,Storebrand Global All Countries A SEK,MSCI ACVVI COMM SVC INDEX 10-40(Price,Asset,0.0085,Global Equity Fund
+SSF:61535,SII:SIXRX,Storebrand Sverige A SEK,SIXRX,Asset,0.0085,Swedish Equity Fund
+SSF:69876,SII:SIXRX,Storebrand Sverige Plus A SEK,SIXRX,Asset,0.0085,Swedish Equity Fund
+SSF:71452,NSx:OMRXBONDALL,SEB Företagsobligatlonsfond A,OMRX Bond All Index,Asset,0.0085,Swedish Bond Fund
+MSCI:127306P,INDEX,MSCI ACVVI COMM SVC INDEX 10-40(Price,MSCI ACVVI COMM SVC INDEX 10-40(Price,Index,0.0085,Global Equity Index
+SII:SIXRX,INDEX,SIXRX,SIXRX,Index,0.0085,Swedish Equity Index
+SII:CSNRXSE,INDEX,CSNRXSE,CSNRXSE,Index,0.0085,Swedish Equity Index
+:OMRXTB,INDEX,OMRX Treasury Bill Index,OMRX Treasury Bill Index,Index,0.0085,Swedish Bond Index
+SSF:61705,NSx:OMRXBONDALL,SEB Kortrantefond SEK A,OMRX Bond All Index,Asset,0.0085,Swedish Bond Fund
+NYS:BP,CBOE:MSEUERP,BP pic,Mormngstar Europe Index PR EU,Asset,0.0085,Global Equity
+NYS:BRK_B,CBOE:MSEUERP,Berkshire Hathaway,Mormngstar Europe Index PR EU,Asset,0.0085,Global Equity
+SSE:HM B,SII:SIXRX,Hennes & Mauritz B,SIXRX,Asset,0.0085,Swedish Equity
+NSx:OMRXBONDALL,INDEX,OMRX Bond All Index,OMRX Bond All Index,Index,0.0085,Swedish Bond Index
+NSx:OMRXRE,INDEX,OMRX Real Return Bond Index,OMRX Real Return Bond Index,Index,0.0085,Swedish Bond Index
+STUI:DE000SL0AXL3,INDEX,Solactive SEK Fix Short IG Credit Index,Solactwe SEK Fix Short IG Credit Index,Index,0.0085,Global Bond Index
+CBOE:MSEUERP,INDEX,Mormngstar Europe Index PR EU,Mormngstar Europe Index PR EU,Index,0.0085,Global Equity Index
+SSF:69692,MSCI:127306P,Storebrand Global Plus A SEK,MSCI ACVVI COMM SVC INDEX 10-40(Price,Asset,0.0085,Global Equity Fund
+IFMF:FI4000439468-SEK,NSx:OMRXBONDALL,Nordea Institutionella Sm IA,OMRX Bond All Index,Asset,0.0085,Swedish Bond Fund
+SSF:63982,NSx:OMRXRE,Realräntefond,OMRX Real Return Bond Index,Asset,0.0085,Swedish Bond Fund
+SSF:60055,SII:CSNRXSE,SEB Sverigefond Småbolag Chans/Risk A,CSNRXSE,Asset,0.0085,Swedish Equity Fund
+SSF:69898,SII:CSNRXSE,Cliens Småbolag A,CSNRXSE,Asset,0.0085,Swedish Equity Fund
+IFMF:SE0001904798-SEK,CBOE:MSEUERP,ALCUR,Mormngstar Europe Index PR EU,Asset,0.0085,Global Alternative Fund
+SSF:66605,MSCI:127306P,SEB Global High Yield Fund C (H-SEK),MSCI ACVVI COMM SVC INDEX 10-40(Price,Asset,0.0085,Global Bond Fund
+HELF:EVLILLB,NSx:OMRXBONDALL,Evli Nordic Senior Secured Loan B,OMRX Bond All Index,Asset,0.0085,Swedish Bond Fund
+IFMF:LU1646476504-SEK,STUI:DE000SL0AXL3,SCOR ILS Atropos Catb B3 SEK,Solactive SEK Fix Short IG Credit Index,Asset,0.0085,Global Alternative Fund

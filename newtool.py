@@ -254,9 +254,10 @@ def create_portfolio(combined_data, weights, start_investment, allocation_limit)
     combined_data = find_breach(combined_data, allocation_limit, weights)
     combined_data['Initial Breaches'] = combined_data['Breach']
 
-    while combined_data['Breach'].any():
-        combined_data, date_holdings_df = reallocate_holdings_at_breach(combined_data, weights, date_holdings_df)
-        combined_data = find_breach(combined_data, allocation_limit, weights)
+    with st.spinner("Fixing breaches..."):
+        while combined_data['Breach'].any():
+            combined_data, date_holdings_df = reallocate_holdings_at_breach(combined_data, weights, date_holdings_df)
+            combined_data = find_breach(combined_data, allocation_limit, weights)
 
     return combined_data, date_holdings_df
 
@@ -265,12 +266,13 @@ def get_categorized_assets(assets_map):
     categories = {}
     display_name_to_asset_id = {}
     for asset, attributes in assets_map.items():
-        category = attributes.get("category", "Uncategorized")
-        display_name = attributes.get("display name", asset)
-        if category not in categories:
-            categories[category] = []
-        categories[category].append(display_name)
-        display_name_to_asset_id[display_name] = asset
+        if attributes["type"] != "Index":  # Exclude items with type "Index"
+            category = attributes.get("category", "Uncategorized")
+            display_name = attributes.get("display name", asset)
+            if category not in categories:
+                categories[category] = []
+            categories[category].append(display_name)
+            display_name_to_asset_id[display_name] = asset
 
     # Sort the assets within each category alphabetically
     for category in categories:
@@ -359,6 +361,8 @@ def main():
         
     # Fetch data
     if st.button("Fetch Data") and selected_assets:
+        st.write(selected_assets)
+        st.write(selected_indices)
         combined_data = fetch_data_infront(selected_assets, selected_indices, start_date, end_date)
         combined_data = clean_data(combined_data)
         combined_data = indexed_net_to_100(combined_data)
@@ -381,7 +385,16 @@ def main():
         display_name = ASSETS_INDICES_MAP[asset].get("display name", asset)
         weight = st.number_input(f"Weight for {display_name}", min_value=0.0, max_value=1.0, value=0.1)
         weights[asset] = weight
-        weights[ASSETS_INDICES_MAP[asset]['index']] = weight #the weight for the index is the same as the asset
+        
+    # Sum the weights for the indices if there are duplicates
+    for asset in selected_assets:
+        index = ASSETS_INDICES_MAP[asset]['index']
+        if index in weights:
+            weights[index] += weights[asset]
+        else:
+            weights[index] = weights[asset]
+
+
 
     # Check if weights add up to 1
     if sum(weights.values()) != 2.0: # double because of the index
