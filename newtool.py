@@ -26,20 +26,28 @@ from datetime import datetime
 #    st.warning("Please enter your Infront username and password to continue.")
 # Connect to Infront API
 infront.InfrontConnect(user="David.Lundberg.ipt", password="Infront2022!") 
+# Read the assets and indices map from the CSV file
+def load_assets_indices_map(csv_file):
+    df = pd.read_csv(csv_file)
+    assets_indices_map = {}
+    for _, row in df.iterrows():
+        assets_indices_map[row['asset']] = {
+            "index": row['index'],
+            "display name": row['display_name'],
+            "index name": row['index_name'],
+            "type": row['type'],
+            "OGC ex. post": row['OGC_ex_post'],
+            "category": row['category']
+        }
+    return assets_indices_map
 
 
 # Map structure for assets and their associated indices
 # Index has no OGC ex. post value, so it is set to 0. It is PER YEAR so divided by period later
 PERIOD = 252
-ASSETS_INDICES_MAP = {
-    "SSF:62022": {"index": "MSCI:127306PSEK", "type": "share", "OGC ex. post": 0.001 },
-    "NYS:BRK.B": {"index": "NYS:BP", "type": "share", "OGC ex. post": 0.002},
-    "NYS:CAT": {"index": "NYS:BRK.B", "type": "share", "OGC ex. post": 0.01},
-    "NYS:DIS": {"index": "NYS:BP", "type": "share", "OGC ex. post": 0.004},
-    "NYS:TLT": {"index": "NYS:BP", "type": "bond", "OGC ex. post": 0.005},
-    "NYS:GLD": {"index": "GSCI", "type": "alternative", "OGC ex. post": 0.01}
-}
+ASSETS_INDICES_MAP = load_assets_indices_map('assets_indices_map.csv')
 ASSETS = list(ASSETS_INDICES_MAP.keys())
+
 
 
 # Fetch data function using Infront API, concatenates asset and index data in pandas DataFrame
@@ -52,7 +60,6 @@ def fetch_data_infront(tickers, index_tickers, start_date, end_date):
             start_date=start_date.strftime('%Y-%m-%d'),
             end_date=end_date.strftime('%Y-%m-%d')
         )
-        st.write(history)
         data_frames = []
         i = 0
         for ticker, df in history.items():
@@ -212,8 +219,6 @@ def reallocate_holdings_at_breach(combined_data, weights, date_holdings_df):
     return combined_data, date_holdings_df
 
 
-
-
 def create_portfolio(combined_data, weights, start_investment, allocation_limit):
 
     combined_data['Weight'] = combined_data.apply(lambda row: weights[row['Name']], axis=1)
@@ -255,7 +260,29 @@ def create_portfolio(combined_data, weights, start_investment, allocation_limit)
 
     return combined_data, date_holdings_df
 
+def get_categorized_assets(assets_map):
+    # Create a dictionary to map categories to their respective assets
+    categories = {}
+    display_name_to_asset_id = {}
+    for asset, attributes in assets_map.items():
+        category = attributes.get("category", "Uncategorized")
+        display_name = attributes.get("display name", asset)
+        if category not in categories:
+            categories[category] = []
+        categories[category].append(display_name)
+        display_name_to_asset_id[display_name] = asset
 
+    # Sort the assets within each category alphabetically
+    for category in categories:
+        categories[category].sort()
+
+    # Create a list of assets with their categories
+    categorized_assets = []
+    for category, assets in sorted(categories.items()):
+        categorized_assets.append(f"--- {category} ---")
+        categorized_assets.extend(assets)
+
+    return categorized_assets, display_name_to_asset_id
 
 
 def main():
@@ -263,7 +290,15 @@ def main():
     st.title("OGC adjusted Portfolio Illustration Tool")    
     combined_data = pd.DataFrame()
 
-    selected_assets = st.multiselect("Select assets for the portfolio:", ASSETS)
+    # Get categorized assets for the dropdown menu
+    categorized_assets, display_name_to_asset_id = get_categorized_assets(ASSETS_INDICES_MAP)
+    selected_display_names = st.multiselect("Select assets for the portfolio:", categorized_assets)
+
+    # Filter out category labels from selected assets
+    selected_display_names = [name for name in selected_display_names if not name.startswith("---")]
+
+    # Map selected display names to asset IDs
+    selected_assets = [display_name_to_asset_id[name] for name in selected_display_names]
 
     # Determine associated indices
     selected_indices = list({ASSETS_INDICES_MAP[asset]["index"] for asset in selected_assets})
@@ -286,14 +321,15 @@ def main():
 
     if 'combined_data' in st.session_state:
         combined_data = st.session_state['combined_data']
-        st.write("Indexed OGC Adjusted Data:", combined_data)
+        # st.write("Indexed OGC Adjusted Data:", combined_data)
     else:
         combined_data = None
 
     # User input for selecting weights
     weights = {}
     for asset in selected_assets:
-        weight = st.number_input(f"Weight for {asset}", min_value=0.0, max_value=1.0, value=0.1)
+        display_name = ASSETS_INDICES_MAP[asset].get("display name", asset)
+        weight = st.number_input(f"Weight for {display_name}", min_value=0.0, max_value=1.0, value=0.1)
         weights[asset] = weight
         weights[ASSETS_INDICES_MAP[asset]['index']] = weight #the weight for the index is the same as the asset
 

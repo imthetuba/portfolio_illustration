@@ -1,0 +1,7 @@
+asset,index,display_name,index_name,type,OGC_ex_post,category
+SSF:62022,MSCI:127306PSEK,Storebrand Global All Countries,MSCI ACWI NR Sek,share,0.0314,Global Shares
+NYS:BRK.B,NYS:BP,Berkshire Hathaway Inc.,Berkshire Hathaway Index,share,0.002,US Shares
+NYS:CAT,NYS:BRK.B,Caterpillar Inc.,Caterpillar Index,share,0.01,US Shares
+NYS:DIS,NYS:BP,The Walt Disney Company,Disney Index,share,0.004,US Shares
+NYS:TLT,NYS:BP,iShares 20+ Year Treasury Bond ETF,Treasury Bond Index,bond,0.005,US Bonds
+NYS:GLD,GSCI,SPDR Gold Shares,Gold Index,alternative,0.01,Commodities
