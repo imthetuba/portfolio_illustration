@@ -285,6 +285,37 @@ def get_categorized_assets(assets_map):
     return categorized_assets, display_name_to_asset_id
 
 
+def plot_holdings(combined_data):
+    # Separate the data into assets and indices
+    assets_data = combined_data[combined_data['Type'] == 'Asset']
+    indices_data = combined_data[combined_data['Type'] == 'Index']
+
+    # Create a mapping from asset IDs to display names
+    asset_id_to_display_name = {asset: attributes["display name"] for asset, attributes in ASSETS_INDICES_MAP.items()}
+
+    # Create a line plot for assets
+    fig = px.line(assets_data, x='date', y='Holdnings', color='Name', title='Holdings in Assets vs Indices')
+
+    # Update the names in the legend to display names
+    for trace in fig.data:
+        trace.name = asset_id_to_display_name.get(trace.name, trace.name)
+
+    # Add a line plot for indices
+    for index_name in indices_data['Name'].unique():
+        index_data = indices_data[indices_data['Name'] == index_name]
+        display_name = asset_id_to_display_name.get(index_name, index_name)
+        fig.add_scatter(x=index_data['date'], y=index_data['Holdnings'], mode='lines', name=display_name)
+
+    # Update layout for better visualization
+    fig.update_layout(
+        xaxis_title='Date',
+        yaxis_title='Holdings',
+        legend_title='Assets and Indices'
+    )
+
+    return fig
+
+
 def main():
     # Streamlit app
     st.title("OGC adjusted Portfolio Illustration Tool")    
@@ -349,8 +380,14 @@ def main():
 
 
         combined_data, date_holdings_df  = create_portfolio(combined_data, weights, start_investment, allocation_limit)
+        
+        # Plot the holdings
+        fig = plot_holdings(combined_data)
+        st.plotly_chart(fig)
+        
         st.write("Portfolio Data:", combined_data)
         st.write("Date vs Total Holdings:", date_holdings_df)
+
 
 
 
