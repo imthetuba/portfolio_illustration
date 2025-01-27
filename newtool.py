@@ -315,6 +315,25 @@ def plot_holdings(combined_data):
 
     return fig
 
+def plot_date_vs_total_holdings(date_holdings_df):
+    # Create a mapping from asset IDs to display names
+    asset_id_to_display_name = {asset: attributes["display name"] for asset, attributes in ASSETS_INDICES_MAP.items()}
+
+    # Create a line plot for total holdings
+    fig = px.line(date_holdings_df, x='Date', y='Total Holdings', color='Type', title='Date vs Total Holdings')
+
+    # Update the names in the legend to display names
+    for trace in fig.data:
+        trace.name = asset_id_to_display_name.get(trace.name, trace.name)
+
+    # Update layout for better visualization
+    fig.update_layout(
+        xaxis_title='Date',
+        yaxis_title='Total Holdings',
+        legend_title='Type'
+    )
+
+    return fig
 
 def main():
     # Streamlit app
@@ -385,8 +404,14 @@ def main():
         fig = plot_holdings(combined_data)
         st.plotly_chart(fig)
         
+        # Plot the date vs total holdings
+        fig_total_holdings = plot_date_vs_total_holdings(date_holdings_df)
+        st.plotly_chart(fig_total_holdings)
+        
         st.write("Portfolio Data:", combined_data)
         st.write("Date vs Total Holdings:", date_holdings_df)
+
+        
 
 
 
