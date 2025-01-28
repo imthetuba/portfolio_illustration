@@ -263,29 +263,21 @@ def create_portfolio(combined_data, weights, start_investment, allocation_limit)
 
 def get_categorized_assets(assets_map):
     # Create a dictionary to map categories to their respective assets
-    categories = {}
+    categories = {"Equity": [], "Alternative": [], "Interest Bearing": []}
     display_name_to_asset_id = {}
     for asset, attributes in assets_map.items():
         if attributes["type"] != "Index":  # Exclude items with type "Index"
             category = attributes.get("category", "Uncategorized")
             display_name = attributes.get("display name", asset)
-            if category not in categories:
-                categories[category] = []
-            categories[category].append(display_name)
-            display_name_to_asset_id[display_name] = asset
+            if category in categories:
+                categories[category].append(display_name)
+                display_name_to_asset_id[display_name] = asset
 
     # Sort the assets within each category alphabetically
     for category in categories:
         categories[category].sort()
 
-    # Create a list of assets with their categories
-    categorized_assets = []
-    for category, assets in sorted(categories.items()):
-        categorized_assets.append(f"--- {category} ---")
-        categorized_assets.extend(assets)
-
-    return categorized_assets, display_name_to_asset_id
-
+    return categories, display_name_to_asset_id
 
 def plot_holdings(combined_data):
     # Separate the data into assets and indices
@@ -342,12 +334,23 @@ def main():
     st.title("OGC adjusted Portfolio Illustration Tool")    
     combined_data = pd.DataFrame()
 
-    # Get categorized assets for the dropdown menu
-    categorized_assets, display_name_to_asset_id = get_categorized_assets(ASSETS_INDICES_MAP)
-    selected_display_names = st.multiselect("Select assets for the portfolio:", categorized_assets)
+   # Get categorized assets for the dropdown menu
+    categories, display_name_to_asset_id = get_categorized_assets(ASSETS_INDICES_MAP)
 
-    # Filter out category labels from selected assets
-    selected_display_names = [name for name in selected_display_names if not name.startswith("---")]
+    # Create three columns for asset selection
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        selected_shares = st.multiselect("Select Equity:", categories["Equity"])
+
+    with col2:
+        selected_alternative = st.multiselect("Select Alternative:", categories["Alternative"])
+
+    with col3:
+        selected_interest_bearing = st.multiselect("Select Interest Bearing:", categories["Interest Bearing"])
+
+    # Combine selected assets
+    selected_display_names = selected_shares + selected_alternative + selected_interest_bearing
 
     # Map selected display names to asset IDs
     selected_assets = [display_name_to_asset_id[name] for name in selected_display_names]
