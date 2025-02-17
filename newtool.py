@@ -169,7 +169,7 @@ def reallocate_holdings_at_breach(combined_data, weights, date_holdings_df):
                 'Total Holdings'
             ].values[0]
 
-            combined_data.at[index, 'Holdnings'] = weights[name] * total_holdings
+            combined_data.at[index, 'Holdings'] = weights[name] * total_holdings
             # from the first breach date, reallocate the holdings using cumulative product
             # Calculate the adjusted holdings using cumulative product
             def calculate_adjusted_holdings(group):
@@ -184,9 +184,9 @@ def reallocate_holdings_at_breach(combined_data, weights, date_holdings_df):
                         'Total Holdings'
                     ].values[0]
                     
-                    group.at[breach_index, 'Holdnings'] = weights[nameofgroup] * total_holdings_local
+                    group.at[breach_index, 'Holdings'] = weights[nameofgroup] * total_holdings_local
                     # calculate the adjusted holdings using cumulative product from the breach date
-                    group.loc[breach_index:, 'Holdnings'] = group.loc[breach_index, 'Holdnings'] * (1 + group.loc[breach_index:, 'OGC Adjusted Period Change']).cumprod()
+                    group.loc[breach_index:, 'Holdings'] = group.loc[breach_index, 'Holdings'] * (1 + group.loc[breach_index:, 'OGC Adjusted Period Change']).cumprod()
                     return group
                 else:
                     #if the group is not the same type as the row where the breach was found, then just return the group
@@ -196,7 +196,7 @@ def reallocate_holdings_at_breach(combined_data, weights, date_holdings_df):
             combined_data = combined_data.groupby('Name').apply(calculate_adjusted_holdings).reset_index(level=0, drop=True)
             
             # Calculate the total holdings for each date and asset or index
-            date_holdings_map = combined_data.groupby(['date', 'Type'])['Holdnings'].sum().unstack().to_dict()
+            date_holdings_map = combined_data.groupby(['date', 'Type'])['Holdings'].sum().unstack().to_dict()
 
             # Calculate the adjusted weights
             for index, row in combined_data.iterrows():
@@ -205,7 +205,7 @@ def reallocate_holdings_at_breach(combined_data, weights, date_holdings_df):
                 if type_ in date_holdings_map and date in date_holdings_map[type_]:
                     total_holdings = date_holdings_map[type_][date]
                     if total_holdings != 0:
-                        combined_data.at[index, 'Weight'] = row['Holdnings'] / total_holdings
+                        combined_data.at[index, 'Weight'] = row['Holdings'] / total_holdings
 
             date_holdings_df = pd.DataFrame.from_dict(date_holdings_map, orient='index').reset_index()
             date_holdings_df = date_holdings_df.melt(id_vars=['index'], var_name='Type', value_name='Total Holdings')
@@ -222,19 +222,19 @@ def reallocate_holdings_at_breach(combined_data, weights, date_holdings_df):
 def create_portfolio(combined_data, weights, start_investment, allocation_limit):
 
     combined_data['Weight'] = combined_data.apply(lambda row: weights[row['Name']], axis=1)
-    combined_data['Holdnings'] = combined_data['Weight'] * start_investment
+    combined_data['Holdings'] = combined_data['Weight'] * start_investment
     
     # Calculate the adjusted holdings using cumulative product
     def calculate_adjusted_holdings(group):
         group = group.copy()
-        group['Holdnings'] = group['Holdnings'].iloc[0] * (1 + group['OGC Adjusted Period Change']).cumprod()
+        group['Holdings'] = group['Holdings'].iloc[0] * (1 + group['OGC Adjusted Period Change']).cumprod()
         return group
     
     # Calculate the adjusted holdings for each row
     combined_data = combined_data.groupby('Name').apply(calculate_adjusted_holdings).reset_index(level=0, drop=True)
     
     # Calculate the total holdings for each date and asset or index
-    date_holdings_map = combined_data.groupby(['date', 'Type'])['Holdnings'].sum().unstack().to_dict()
+    date_holdings_map = combined_data.groupby(['date', 'Type'])['Holdings'].sum().unstack().to_dict()
 
     
     # Calculate the adjusted weights
@@ -244,7 +244,7 @@ def create_portfolio(combined_data, weights, start_investment, allocation_limit)
         if type_ in date_holdings_map and date in date_holdings_map[type_]:
             total_holdings = date_holdings_map[type_][date]
             if total_holdings != 0:
-                combined_data.at[index, 'Weight'] = row['Holdnings'] / total_holdings
+                combined_data.at[index, 'Weight'] = row['Holdings'] / total_holdings
 
 
     date_holdings_df = pd.DataFrame.from_dict(date_holdings_map, orient='index').reset_index()
@@ -254,7 +254,7 @@ def create_portfolio(combined_data, weights, start_investment, allocation_limit)
     combined_data = find_breach(combined_data, allocation_limit, weights)
     combined_data['Initial Breaches'] = combined_data['Breach']
 
-    with st.spinner("Fixing breaches..."):
+    with st.spinner("Fixing breaches in portfolio allocation..."):
         while combined_data['Breach'].any():
             combined_data, date_holdings_df = reallocate_holdings_at_breach(combined_data, weights, date_holdings_df)
             combined_data = find_breach(combined_data, allocation_limit, weights)
@@ -288,7 +288,7 @@ def plot_holdings(combined_data):
     asset_id_to_display_name = {asset: attributes["display name"] for asset, attributes in ASSETS_INDICES_MAP.items()}
 
     # Create a line plot for assets
-    fig = px.line(assets_data, x='date', y='Holdnings', color='Name', title='Holdings in Assets vs Indices')
+    fig = px.line(assets_data, x='date', y='Holdings', color='Name', title='Holdings in Assets vs Indices')
 
     # Update the names in the legend to display names
     for trace in fig.data:
@@ -298,7 +298,7 @@ def plot_holdings(combined_data):
     for index_name in indices_data['Name'].unique():
         index_data = indices_data[indices_data['Name'] == index_name]
         display_name = asset_id_to_display_name.get(index_name, index_name)
-        fig.add_scatter(x=index_data['date'], y=index_data['Holdnings'], mode='lines', name=display_name)
+        fig.add_scatter(x=index_data['date'], y=index_data['Holdings'], mode='lines', name=display_name)
 
     # Update layout for better visualization
     fig.update_layout(
@@ -314,11 +314,16 @@ def plot_date_vs_total_holdings(date_holdings_df):
     asset_id_to_display_name = {asset: attributes["display name"] for asset, attributes in ASSETS_INDICES_MAP.items()}
 
     # Create a line plot for total holdings
-    fig = px.line(date_holdings_df, x='Date', y='Total Holdings', color='Type', title='Date vs Total Holdings')
+    fig = px.line(date_holdings_df, x='Date', y='Total Holdings', color='Type', title='Date vs Total Holdings',
+                  color_discrete_map={
+                      'Index': 'red',
+                      'Asset': 'blue'
+                  })
 
     # Update the names in the legend to display names
     for trace in fig.data:
         trace.name = asset_id_to_display_name.get(trace.name, trace.name)
+
 
     # Update layout for better visualization
     fig.update_layout(
@@ -328,6 +333,64 @@ def plot_date_vs_total_holdings(date_holdings_df):
     )
 
     return fig
+
+def calculate_drawdowns(data, column, window=500):
+    """
+    Calculate drawdowns for a given column in the DataFrame using a rolling maximum.
+    """
+    data = data.copy()
+    data['Max'] = data[column].cummax()
+    data['Drawdown'] = (data[column] - data['Max']) / data['Max']
+    return data
+
+
+def plot_drawdowns(portfolio_data, index_data, window=500):
+    """
+    Plot drawdowns for the portfolio and the index.
+    """
+    # Calculate drawdowns
+    portfolio_data = calculate_drawdowns(portfolio_data, 'Total Holdings', window)
+    index_data = calculate_drawdowns(index_data, 'Total Holdings', window)
+
+    
+    # Create a DataFrame for plotting
+    drawdown_data = pd.DataFrame({
+        'Date': portfolio_data['Date'],
+        'Portfolio Drawdown': portfolio_data['Drawdown']
+    })
+
+    index_drawdown_data = pd.DataFrame({
+        'Date': index_data['Date'],
+        'Index Drawdown': index_data['Drawdown']
+    })
+
+    # Merge the two DataFrames on the 'Date' column
+    drawdown_data = pd.merge(drawdown_data, index_drawdown_data, on='Date', how='outer')
+
+    # Melt the DataFrame for Plotly
+    drawdown_data = drawdown_data.melt(id_vars=['Date'], var_name='Type', value_name='Drawdown')
+
+    # Filter out non-date values
+    drawdown_data = drawdown_data.dropna(subset=['Date'])
+
+    # Create the plot
+    fig = px.line(drawdown_data, x='Date', y='Drawdown', color='Type', title='Drawdowns: Portfolio vs Index',
+                  color_discrete_map={
+                      'Portfolio Drawdown': 'blue',
+                      'Index Drawdown': 'red'
+                  })
+
+    # Update layout for better visualization
+    fig.update_layout(
+        xaxis_title='Date',
+        yaxis_title='Drawdown',
+        legend_title='Type',
+        template='plotly_white'
+    )
+
+    return fig
+
+
 
 def main():
     # Streamlit app
@@ -410,8 +473,12 @@ def main():
     # Button to create portfolio outputs
     if st.button("Create Portfolio Outputs") and combined_data is not None:
         # Implement the logic to create portfolio outputs based on the inputs
-        st.write(f"Start Investment Amount: {start_investment}")
-        st.write(f"Allocation Limit: {allocation_limit}%")
+        # Implement the logic to create portfolio outputs based on the inputs
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric(label="Start Investment Amount", value=f"{start_investment} SEK")
+        with col2:
+            st.metric(label="Allocation Limit", value=f"{allocation_limit}%")
 
 
         combined_data, date_holdings_df  = create_portfolio(combined_data, weights, start_investment, allocation_limit)
@@ -424,6 +491,14 @@ def main():
         fig_total_holdings = plot_date_vs_total_holdings(date_holdings_df)
         st.plotly_chart(fig_total_holdings)
         
+        
+        # Plot the drawdowns
+        index_data = date_holdings_df[date_holdings_df['Type'] == 'Index']
+        portfolio_data = date_holdings_df[date_holdings_df['Type'] == 'Asset']
+        fig_drawdowns = plot_drawdowns(portfolio_data, index_data)
+        st.plotly_chart(fig_drawdowns)
+
+
         st.write("Portfolio Data:", combined_data)
         st.write("Date vs Total Holdings:", date_holdings_df)
 
