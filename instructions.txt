@@ -1,0 +1,47 @@
+Step-by-Step Instructions
+Install Python:
+
+Go to the Python website.
+Download the latest version of Python for Windows.
+Run the installer and make sure to check the box that says "Add Python to PATH" before clicking "Install Now".
+Install Git (Optional but recommended):
+
+Go to the Git website.
+Download the latest version of Git for Windows.
+Run the installer and follow the default settings.
+Open Command Prompt:
+
+Press Win + R, type cmd, and press Enter.
+Verify Python Installation:
+
+In the Command Prompt, type: python --version
+You should see the Python version you installed. If not, ensure Python is added to your PATH.
+Install Required Python Packages:
+
+In the Command Prompt, navigate to your project directory. For example: cd C:\Users\TuvaGunnarsson\projects\Jespers portföljillustrationsverktyg
+Install the required packages by running:
+Run the Streamlit Application:
+
+In the Command Prompt, run:streamlit run illustrationtool.py
+This will open a new tab in your default web browser with the Streamlit application.
+
+
+Additional Notes
+Infront API Access:
+
+Ensure you have an Infront account and API access. You will need your Infront username and password to use the tool.
+CSV File:
+
+Make sure the assets_indices_map.csv file is in the same directory as illustrationtool.py.
+Example Commands
+Here is a summary of the commands you will run in the Command Prompt:
+# Navigate to the project directory
+cd C:\Users\TuvaGunnarsson\projects\Jespers portföljillustrationsverktyg
+
+# Install required packages
+pip install streamlit infrontconnect pandas plotly
+
+# Run the Streamlit application
+streamlit run illustrationtool.py
+
+By following these steps, you should be able to set up and run the portfolio illustration tool on a Windows machine.

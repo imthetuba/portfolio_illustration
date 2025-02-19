@@ -14,21 +14,20 @@ from datetime import datetime
 # Write the following in your terminal to install the required packages and run the script:
 
 # python pip install streamlit infrontconnect pandas plotly
-# python streamlit run tool.py
+# python streamlit run illustrationtool.py
 
 
 
 # Prompt for username and password
-#username = st.text_input("Enter your Infront username:")
-#password = st.text_input("Enter your Infront password:", type="password")
+username = st.text_input("Enter your Infront username:")
+password = st.text_input("Enter your Infront password:", type="password")
 
 
-#if username and password:
-#    infront.InfrontConnect(user=username, password=password)  # Use the provided credentials
-#else:
-#    st.warning("Please enter your Infront username and password to continue.")
-# Connect to Infront API
-infront.InfrontConnect(user="David.Lundberg.ipt", password="Infront2022!") 
+if username and password:
+    infront.InfrontConnect(user=username, password=password)  # Use the provided credentials
+else:
+    st.warning("Please enter your Infront username and password to continue.")
+ 
 # Read the assets and indices map from the CSV file
 def load_assets_indices_map(csv_file):
     df = pd.read_csv(csv_file)
