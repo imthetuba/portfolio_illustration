@@ -112,69 +112,49 @@ def find_breach(combined_data, allocation_limit, weights):
     return combined_data
 
 def reallocate_holdings_at_breach(combined_data, weights, date_holdings_df):
+    breach_rows = combined_data[combined_data['Breach']]
+    if breach_rows.empty:
+        return combined_data, date_holdings_df
 
-    # Find the first breach date
-    first_breach_date = combined_data.loc[combined_data['Breach'], 'date'].min()
-    
-    if pd.isna(first_breach_date):
-        return combined_data  # No breach found, return the original data
-    
-    # Reallocate holdings at the first breach date
-    for index, row in combined_data.iterrows():
-        if row['date'] == first_breach_date:
-            name = row['Name']
+    # Fix all unique breach dates in this pass
+    for breach_date in sorted(breach_rows['date'].unique()):
+        for breach_type in breach_rows[breach_rows['date'] == breach_date]['Type'].unique():
+            mask = (combined_data['date'] == breach_date) & (combined_data['Type'] == breach_type)
             total_holdings = date_holdings_df.loc[
-                (date_holdings_df['Type'] == row['Type']) & 
-                (date_holdings_df['Date'] == row['date']), 
+                (date_holdings_df['Type'] == breach_type) & 
+                (date_holdings_df['Date'] == breach_date), 
                 'Total Holdings'
             ].values[0]
+            affected_names = combined_data[mask]['Name'].unique()
+            for name in affected_names:
+                idx = combined_data[(combined_data['Name'] == name) & (combined_data['date'] == breach_date)].index
+                combined_data.loc[idx, 'Holdings'] = weights[name] * total_holdings
 
-            combined_data.at[index, 'Holdings'] = weights[name] * total_holdings
-            # from the first breach date, reallocate the holdings using cumulative product
-            # Calculate the adjusted holdings using cumulative product
-            def calculate_adjusted_holdings(group):
-                # If the group is the sme type (ie asset or index) as the row where the breach was found, then set the holdings to the weight * total holdings
-                if group['Type'].iloc[0] == row['Type']:
-                    group = group.copy()
-                    breach_index = group[group['date'] == first_breach_date].index[0]
-                    nameofgroup = group['Name'].iloc[0]
-                    total_holdings_local = date_holdings_df.loc[
-                        (date_holdings_df['Type'] == group['Type'].iloc[0]) & 
-                        (date_holdings_df['Date'] == first_breach_date), 
-                        'Total Holdings'
-                    ].values[0]
-                    
-                    group.at[breach_index, 'Holdings'] = weights[nameofgroup] * total_holdings_local
-                    # calculate the adjusted holdings using cumulative product from the breach date
-                    group.loc[breach_index:, 'Holdings'] = group.loc[breach_index, 'Holdings'] * (1 + group.loc[breach_index:, 'OGC Adjusted Period Change']).cumprod()
-                    return group
-                else:
-                    #if the group is not the same type as the row where the breach was found, then just return the group
-                    return group
-            
-            # Calculate the adjusted holdings for each row
-            combined_data = combined_data.groupby('Name').apply(calculate_adjusted_holdings).reset_index(level=0, drop=True)
-            
-            # Calculate the total holdings for each date and asset or index
-            date_holdings_map = combined_data.groupby(['date', 'Type'])['Holdings'].sum().unstack().to_dict()
+    # Recalculate holdings forward from each breach date for affected names
+    def recalc_holdings(group):
+        group = group.copy()
+        breach_dates = set(breach_rows[breach_rows['Name'] == group['Name'].iloc[0]]['date'])
+        for breach_date in breach_dates:
+            if breach_date in group['date'].values:
+                breach_index = group[group['date'] == breach_date].index[0]
+                group.loc[breach_index:, 'Holdings'] = group.loc[breach_index, 'Holdings'] * (1 + group.loc[breach_index:, 'OGC Adjusted Period Change']).cumprod()
+        return group
 
-            # Calculate the adjusted weights
-            for index, row in combined_data.iterrows():
-                date = row['date']
-                type_ = row['Type']
-                if type_ in date_holdings_map and date in date_holdings_map[type_]:
-                    total_holdings = date_holdings_map[type_][date]
-                    if total_holdings != 0:
-                        combined_data.at[index, 'Weight'] = row['Holdings'] / total_holdings
+    combined_data = combined_data.groupby('Name').apply(recalc_holdings).reset_index(level=0, drop=True)
 
-            date_holdings_df = pd.DataFrame.from_dict(date_holdings_map, orient='index').reset_index()
-            date_holdings_df = date_holdings_df.melt(id_vars=['index'], var_name='Type', value_name='Total Holdings')
-            date_holdings_df.columns = ['Type', 'Date', 'Total Holdings']
+    # Recalculate total holdings and weights
+    date_holdings_map = combined_data.groupby(['date', 'Type'])['Holdings'].sum().unstack().to_dict()
+    for index, row in combined_data.iterrows():
+        date = row['date']
+        type_ = row['Type']
+        if type_ in date_holdings_map and date in date_holdings_map[type_]:
+            total_holdings = date_holdings_map[type_][date]
+            if total_holdings != 0:
+                combined_data.at[index, 'Weight'] = row['Holdings'] / total_holdings
 
-            break
-        else:
-            continue
-
+    date_holdings_df = pd.DataFrame.from_dict(date_holdings_map, orient='index').reset_index()
+    date_holdings_df = date_holdings_df.melt(id_vars=['index'], var_name='Type', value_name='Total Holdings')
+    date_holdings_df.columns = ['Type', 'Date', 'Total Holdings']
 
     return combined_data, date_holdings_df
 
@@ -214,7 +194,7 @@ def create_portfolio(combined_data, weights, start_investment, allocation_limit)
     combined_data['Initial Breaches'] = combined_data['Breach']
 
     with st.spinner("Fixing breaches in portfolio allocation..."):
-        max_iterations = 100
+        max_iterations = 1000
         iteration = 0
         while combined_data['Breach'].any():
             iteration += 1
@@ -223,5 +203,36 @@ def create_portfolio(combined_data, weights, start_investment, allocation_limit)
             if iteration >= max_iterations:
                 st.warning("Reached maximum iterations while fixing breaches. There may be an issue with the breach resolution logic.")
                 break
+            
+
+    # Replace asset IDs with display names in 'Name' column of combined_data
+    combined_data['Name'] = combined_data['Name'].map(lambda x: ASSETS_INDICES_MAP[x]["display name"] if x in ASSETS_INDICES_MAP else x)
+
+    # Replace asset IDs with display names in date_holdings_df 'Type' column if possible
+    if 'Type' in date_holdings_df.columns:
+        date_holdings_df['Type'] = date_holdings_df['Type'].map(lambda x: ASSETS_INDICES_MAP[x]["display name"] if x in ASSETS_INDICES_MAP else x)
+
+
+
     return combined_data, date_holdings_df
 
+def create_excel_file(combined_data, date_holdings_df):
+    output = pd.pivot_table(
+        combined_data,
+        index='date',
+        columns='Name',
+        values='Holdings'
+    )
+
+    # Replace asset IDs with display names in columns
+    display_name_map = {asset: attrs["display name"] for asset, attrs in ASSETS_INDICES_MAP.items()}
+    output.rename(columns=display_name_map, inplace=True)
+
+    # Add total holdings per date as a new column
+    output['Total Holdings'] = output.sum(axis=1)
+
+    # Write to Excel
+    excel_buffer = pd.ExcelWriter('portfolio_output.xlsx', engine='xlsxwriter')
+    output.to_excel(excel_buffer, sheet_name='Portfolio Holdings')
+    date_holdings_df.to_excel(excel_buffer, sheet_name='Date Holdings', index=False)
+    excel_buffer.close()

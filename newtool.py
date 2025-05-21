@@ -559,7 +559,7 @@ def main():
     selected_indices = list({ASSETS_INDICES_MAP[asset]["index"] for asset in selected_assets})
 
 
-    start_date = st.date_input("Start date", datetime(2020, 1, 1))
+    start_date = st.date_input("Start date", datetime(2022, 1, 1))
     end_date = st.date_input("End date", datetime.today())
         
     # Fetch data

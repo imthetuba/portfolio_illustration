@@ -94,7 +94,7 @@ def show_stage_2():
     start_investment = st.number_input("Start investment amount (SEK)", min_value=0, value=100000)
     st.session_state['start_investment'] = start_investment
 
-    start_date = st.date_input("Start date", datetime(2020, 1, 1))
+    start_date = st.date_input("Start date", datetime(2022, 1, 1))
     end_date = st.date_input("End date", datetime.today())
     st.session_state['start_date'] = start_date
     st.session_state['end_date'] = end_date
@@ -107,7 +107,7 @@ def show_stage_3():
     selected_assets = st.session_state.get('selected_assets', [])
     weights = st.session_state.get('weights', {})
     allocation_limit = st.session_state.get('allocation_limit', 50)
-    start_date = st.session_state.get('start_date', datetime(2020, 1, 1))
+    start_date = st.session_state.get('start_date', datetime(2022, 1, 1))
     end_date = st.session_state.get('end_date', datetime.today())
     start_investment = st.session_state.get('start_investment', 100000)
     
@@ -126,11 +126,10 @@ def show_stage_3():
     combined_data = indexed_OGC_adjusted_to_100(combined_data)
     st.session_state['combined_data'] = combined_data
 
-    st.write("Portfolio calculation complete!")
-    st.dataframe(combined_data.head())
-    
-    
     combined_data, date_holdings_df  = create_portfolio(combined_data, weights, start_investment, allocation_limit)    
+    st.write("Portfolio calculation complete!")
+
+    
     # Generate summary report
     generate_summary_report(combined_data, date_holdings_df, start_investment, allocation_limit, weights)
 
