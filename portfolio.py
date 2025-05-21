@@ -44,6 +44,7 @@ def fetch_data_infront(tickers, index_tickers, start_date, end_date):
         data_frames = []
         i = 0
         for ticker, df in history.items():
+            print(f"Fetching data for {ticker}")
             df['Type'] = 'Asset'
             df['Name'] = tickers[i]
             i += 1
@@ -57,6 +58,7 @@ def fetch_data_infront(tickers, index_tickers, start_date, end_date):
         index_data_frames = []
         i = 0
         for ticker, df in index_history.items():
+            print(f"Fetching data for {ticker}")
             df['Type'] = 'Index'
             df['Name'] = index_tickers[i]
             i += 1
@@ -205,18 +207,9 @@ def create_portfolio(combined_data, weights, start_investment, allocation_limit)
                 break
             
 
-    # Replace asset IDs with display names in 'Name' column of combined_data
-    combined_data['Name'] = combined_data['Name'].map(lambda x: ASSETS_INDICES_MAP[x]["display name"] if x in ASSETS_INDICES_MAP else x)
-
-    # Replace asset IDs with display names in date_holdings_df 'Type' column if possible
-    if 'Type' in date_holdings_df.columns:
-        date_holdings_df['Type'] = date_holdings_df['Type'].map(lambda x: ASSETS_INDICES_MAP[x]["display name"] if x in ASSETS_INDICES_MAP else x)
-
-
-
+    
     return combined_data, date_holdings_df
 
-def create_excel_file(combined_data, date_holdings_df):
     output = pd.pivot_table(
         combined_data,
         index='date',

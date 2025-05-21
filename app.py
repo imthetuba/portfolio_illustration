@@ -32,27 +32,42 @@ infront.InfrontConnect(user="David.Lundberg.ipt", password="Infront2022!")
 
 def show_stage_1():
     st.title("Portfolio Setup")
-    st.write("Would you like to use a default portfolio setting?")
-    if st.button("Use Default Portfolio"):
-        st.session_state['use_default'] = True
-        st.session_state['page'] = 2
-    if st.button("Create Custom Portfolio"):
-        st.session_state['use_default'] = False
-        st.session_state['page'] = 2
+    st.write("Choose a standard portfolio or create your own:")
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        if st.button("Equity Heavy Portfolio"):
+            st.session_state['use_default'] = True
+            st.session_state['portfolio_file'] = "standard_equity_portfolio.csv"
+            st.session_state['page'] = 2
+    with col2:
+        if st.button("Interest Bearing Heavy Portfolio"):
+            st.session_state['use_default'] = True
+            st.session_state['portfolio_file'] = "standard_interest_portfolio.csv"
+            st.session_state['page'] = 2
+    with col3:
+        if st.button("Create Custom Portfolio"):
+            st.session_state['use_default'] = False
+            st.session_state['portfolio_file'] = None
+            st.session_state['page'] = 2
 
 def show_stage_2():
     st.title("Portfolio Selection & Adjustment")
     categories, display_name_to_asset_id = get_categorized_assets(ASSETS_INDICES_MAP)
-    if st.session_state.get('use_default', False):
-        # Example: pre-select some assets and weights
-        default_assets = categories["Equity"][:2] + categories["Alternative"][:1]
-        selected_shares = default_assets
-        selected_alternative = []
-        selected_interest_bearing = []
+
+    if st.session_state.get('use_default', False) and st.session_state.get('portfolio_file'):
+        import pandas as pd
+        df = pd.read_csv(st.session_state['portfolio_file'])
+        default_assets = [a for a in df['asset']]
+        default_weights = dict(zip(df['asset'], df['weight']))
+        selected_shares = [ASSETS_INDICES_MAP[a]["display name"] for a in default_assets if ASSETS_INDICES_MAP[a]["category"] == "Equity"]
+        selected_alternative = [ASSETS_INDICES_MAP[a]["display name"] for a in default_assets if ASSETS_INDICES_MAP[a]["category"] == "Alternative"]
+        selected_interest_bearing = [ASSETS_INDICES_MAP[a]["display name"] for a in default_assets if ASSETS_INDICES_MAP[a]["category"] == "Interest Bearing"]
     else:
         selected_shares = []
         selected_alternative = []
         selected_interest_bearing = []
+        default_weights = {}
 
     col1, col2, col3 = st.columns(3)
     with col1:
@@ -66,10 +81,12 @@ def show_stage_2():
     selected_assets = [display_name_to_asset_id[name] for name in selected_display_names]
     st.session_state['selected_assets'] = selected_assets
 
+
     weights = {}
     for asset in selected_assets:
         display_name = ASSETS_INDICES_MAP[asset].get("display name", asset)
-        weight = st.number_input(f"Weight for {display_name}", min_value=0.0, max_value=1.0, value=0.1)
+        default_weight = default_weights.get(asset, 0.1)
+        weight = st.number_input(f"Weight for {display_name}", min_value=0.0, max_value=1.0, value=default_weight)
         weights[asset] = weight
     # Sum the weights for the indices if there are duplicates
     for asset in selected_assets:
@@ -114,7 +131,7 @@ def show_stage_3():
     if not selected_assets or not weights:
         st.warning("No portfolio selected. Please go back and select assets.")
         if st.button("Back"):
-            st.session_state['page'] = 2
+            st.session_state['page'] = 1
         return
 
     selected_indices = list({ASSETS_INDICES_MAP[asset]["index"] for asset in selected_assets})
@@ -134,7 +151,7 @@ def show_stage_3():
     generate_summary_report(combined_data, date_holdings_df, start_investment, allocation_limit, weights)
 
     if st.button("Back"):
-        st.session_state['page'] = 2
+        st.session_state['page'] = 1
 
 def main():
     if 'page' not in st.session_state:

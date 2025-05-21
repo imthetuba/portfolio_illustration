@@ -66,6 +66,50 @@ def plot_date_vs_total_holdings(date_holdings_df):
 
     return fig
 
+def plot_all_holdings(combined_data):
+    """
+    Create one plot for each asset and its corresponding index.
+    Returns a dictionary mapping asset display names to Plotly figures.
+    """
+    # Create a mapping from asset display names to asset ID
+    asset_display_name_to_id = {attributes["display name"]: asset for asset, attributes in ASSETS_INDICES_MAP.items()}
+    asset_id_to_display_name = {asset: attributes["display name"] for asset, attributes in ASSETS_INDICES_MAP.items()}
+
+    # Find all unique assets (Type == 'Asset')
+    assets = combined_data[combined_data['Type'] == 'Asset']['Name'].unique()
+    plots = {}
+
+    for asset in assets:
+        asset_id = asset_display_name_to_id.get(asset, asset)
+        # Find the corresponding index for this asset
+        index_id = ASSETS_INDICES_MAP.get(asset_id, {}).get("index")
+        if not index_id:
+            continue  # Skip if no index is mapped
+
+        index = asset_id_to_display_name.get(index_id, index_id)
+
+        # Filter data for this asset and its index
+        asset_data = combined_data[(combined_data['Type'] == 'Asset') & (combined_data['Name'] == asset)]
+        index_data = combined_data[(combined_data['Type'] == 'Index') & (combined_data['Name'] == index)]
+
+        # Create the plot
+        fig = px.line(title=f"{asset} vs {index} Holdings Over Time")
+        if not asset_data.empty:
+            fig.add_scatter(x=asset_data['date'], y=asset_data['Holdings'], mode='lines', name=asset)
+        if not index_data.empty:
+            fig.add_scatter(x=index_data['date'], y=index_data['Holdings'], mode='lines', name=index)
+
+        fig.update_layout(
+            xaxis_title='Date',
+            yaxis_title='Holdings',
+            legend_title='Type',
+            template='plotly_white'
+        )
+
+        plots[asset] = fig
+
+    return plots
+
 
 def calculate_drawdowns(data, column, window=500):
     """
@@ -134,46 +178,6 @@ def calculate_sharpe_ratio(returns, risk_free_rate=0.01):
     sharpe_ratio = annualized_excess_returns / annualized_volatility
     return sharpe_ratio
 
-def export_report_to_pdf(combined_data, date_holdings_df, start_investment, allocation_limit, weights, sharpe_ratio):
-    """
-    Export the summary report to a PDF file.
-    """
-    st.write("Exporting the report to PDF...")
-    # Generate HTML content for the report
-    html_content = f"""
-    <html>
-    <head>
-        <title>Summary Report</title>
-    </head>
-    <body>
-        <h1>Summary Report</h1>
-        <h2>Key Metrics</h2>
-        <p>Start Investment Amount: {start_investment} SEK</p>
-        <p>Allocation Limit: {allocation_limit}%</p>
-        <p>Sharpe Ratio: {sharpe_ratio:.2f}</p>
-        <h2>Asset Weights</h2>
-        <ul>
-    """
-    for asset, weight in weights.items():
-        display_name = ASSETS_INDICES_MAP[asset].get("display name", asset)
-        html_content += f"<li>{display_name}: {weight:.2f}</li>"
-    html_content += """
-        </ul>
-        <h2>Portfolio Data</h2>
-        {combined_data.to_html()}
-        <h2>Date vs Total Holdings Data</h2>
-        {date_holdings_df.to_html()}
-    </body>
-    </html>
-    """
-
-     # Convert HTML content to PDF
-    try:
-        pdfkit.from_string(html_content, 'summary_report.pdf', configuration=config)
-        st.success("Report exported to summary_report.pdf")
-    except Exception as e:
-        st.error(f"Error exporting report to PDF: {e}")
-
 def export_report_to_excel(combined_data, date_holdings_df, start_investment, allocation_limit, weights, sharpe_ratio):
     """
     Export the summary report to an Excel file.
@@ -239,6 +243,19 @@ def generate_summary_report(combined_data, date_holdings_df, start_investment, a
     fig_drawdowns = plot_drawdowns(portfolio_data, index_data)
     st.plotly_chart(fig_drawdowns)
 
+    # Plot all holdings
+    #st.subheader("All Holdings")    
+    #all_holdings_plots = plot_all_holdings(combined_data)
+    #for asset_display_name, fig in all_holdings_plots.items():
+    #    st.markdown(f"**{asset_display_name}**")
+    #    st.plotly_chart(fig)
+
+
+    # Replace asset IDs with display names in 'Name' column of combined_data
+    combined_data['Name'] = combined_data['Name'].map(lambda x: ASSETS_INDICES_MAP[x]["display name"] if x in ASSETS_INDICES_MAP else x)
+   
+
+
     # Display portfolio data
     st.subheader("Portfolio Data")
     st.write(combined_data)
@@ -246,11 +263,7 @@ def generate_summary_report(combined_data, date_holdings_df, start_investment, a
     # Display date vs total holdings data
     st.subheader("Date vs Total Holdings Data")
     st.write(date_holdings_df)
-
-    # button to export the report to PDF or Excel
-    if st.button("Export Report to PDF"):
-        export_report_to_pdf(combined_data, date_holdings_df, start_investment, allocation_limit, weights, sharpe_ratio)
-
+    # Export report to Excel
     if st.button("Export Report to Excel"):
         export_report_to_excel(combined_data, date_holdings_df, start_investment, allocation_limit, weights, sharpe_ratio)
 
