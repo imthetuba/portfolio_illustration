@@ -1,5 +1,6 @@
 import streamlit as st
 from InfrontConnect import infront
+from admin import show_asset_indices_admin
 from portfolio import (
     get_categorized_assets,
     fetch_data_infront,
@@ -80,6 +81,10 @@ def show_stage_1():
             st.session_state['multiple_portfolios'] = True
             st.session_state['page'] = 4
 
+    st.markdown("---")
+    if st.button("Go to Admin"):
+        st.session_state['page'] = 99
+
 def show_stage_2():
     st.title("Portfolio Selection & Adjustment")
     categories, display_name_to_asset_id = get_categorized_assets(ASSETS_INDICES_MAP)
@@ -155,6 +160,43 @@ def show_stage_2():
     if st.button("Calculate Portfolio"):
 
         st.session_state['page'] = 3
+
+def show_stage_3():
+    st.title("Results")
+    selected_assets = st.session_state.get('selected_assets', [])
+    weights = st.session_state.get('weights', {})
+    asset_only_weights = st.session_state.get('asset_only_weights', {})
+    allocation_limit = st.session_state.get('allocation_limit', 50)
+    start_date = st.session_state.get('start_date', datetime(2022, 1, 1))
+    end_date = st.session_state.get('end_date', datetime.today())
+    start_investment = st.session_state.get('start_investment', 100000)
+    
+    data_frequency = st.session_state.get('data_frequency', "daily")
+    
+    if not selected_assets or not weights:
+        st.warning("No portfolio selected. Please go back and select assets.")
+        if st.button("Back"):
+            st.session_state['page'] = 1
+        return
+
+    selected_indices = list({ASSETS_INDICES_MAP[asset]["index"] for asset in selected_assets})
+    combined_data = fetch_data_infront(selected_assets, selected_indices, start_date, end_date)
+    combined_data, period = clean_data(combined_data, data_frequency)
+    combined_data = indexed_net_to_100(combined_data)
+    combined_data = period_change(combined_data)
+    combined_data = OGC_adjusted_Period_Change(combined_data, period)
+    combined_data = indexed_OGC_adjusted_to_100(combined_data)
+    st.session_state['combined_data'] = combined_data
+
+    combined_data, date_holdings_df  = create_portfolio(combined_data, weights, start_investment, allocation_limit)    
+    st.write("Portfolio calculation complete!")
+
+    
+    # Generate summary report
+    generate_summary_report(combined_data, date_holdings_df, start_investment, allocation_limit, weights, asset_only_weights, period)
+
+    if st.button("Back"):
+        st.session_state['page'] = 1
 
 def show_stage_4():
     st.title("Compare Multiple Portfolios")
@@ -311,42 +353,6 @@ def show_stage_5():
     if st.button("Back"):
         st.session_state['page'] = 1
 
-def show_stage_3():
-    st.title("Results")
-    selected_assets = st.session_state.get('selected_assets', [])
-    weights = st.session_state.get('weights', {})
-    asset_only_weights = st.session_state.get('asset_only_weights', {})
-    allocation_limit = st.session_state.get('allocation_limit', 50)
-    start_date = st.session_state.get('start_date', datetime(2022, 1, 1))
-    end_date = st.session_state.get('end_date', datetime.today())
-    start_investment = st.session_state.get('start_investment', 100000)
-    
-    data_frequency = st.session_state.get('data_frequency', "daily")
-    
-    if not selected_assets or not weights:
-        st.warning("No portfolio selected. Please go back and select assets.")
-        if st.button("Back"):
-            st.session_state['page'] = 1
-        return
-
-    selected_indices = list({ASSETS_INDICES_MAP[asset]["index"] for asset in selected_assets})
-    combined_data = fetch_data_infront(selected_assets, selected_indices, start_date, end_date)
-    combined_data, period = clean_data(combined_data, data_frequency)
-    combined_data = indexed_net_to_100(combined_data)
-    combined_data = period_change(combined_data)
-    combined_data = OGC_adjusted_Period_Change(combined_data, period)
-    combined_data = indexed_OGC_adjusted_to_100(combined_data)
-    st.session_state['combined_data'] = combined_data
-
-    combined_data, date_holdings_df  = create_portfolio(combined_data, weights, start_investment, allocation_limit)    
-    st.write("Portfolio calculation complete!")
-
-    
-    # Generate summary report
-    generate_summary_report(combined_data, date_holdings_df, start_investment, allocation_limit, weights, asset_only_weights, period)
-
-    if st.button("Back"):
-        st.session_state['page'] = 1
 
 def main():
     if 'page' not in st.session_state:
@@ -362,6 +368,8 @@ def main():
         show_stage_4()
     elif st.session_state['page'] == 5:
         show_stage_5()
+    elif st.session_state['page'] == 99:
+        show_asset_indices_admin()
 
 if __name__ == "__main__":
     main()
