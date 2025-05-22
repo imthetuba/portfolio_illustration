@@ -1,0 +1,80 @@
+# Evisens Portföljillustrationsverktyg
+
+**Evisens Portföljillustrationsverktyg** is an interactive Streamlit-based tool for building, adjusting, and visualizing investment portfolios. The app allows users to select assets, assign weights, set investment parameters, and compare multiple portfolios side by side with clear visualizations.
+
+## Features
+
+- **Asset Selection:** Choose from equities, alternatives, and interest-bearing assets.
+- **Custom Weights:** Assign custom weights to each asset in your portfolio.
+- **Portfolio Comparison:** Compare 2–4 portfolios in parallel, each with its own asset mix and weights.
+- **Dynamic Visualizations:** Instantly see your portfolio allocations as pie charts.
+- **Historical Analysis:** Set investment period and allocation limits to analyze portfolio performance over time.
+- **Admin Mode:** Special admin page for advanced settings or management.
+
+## Getting Started
+
+### Prerequisites
+
+- Python 3.8+
+- [Streamlit](https://streamlit.io/)
+- pandas, numpy, and any other dependencies listed in `requirements.txt`
+
+### Installation
+
+1. **Install dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+2. **Run the app:**
+    ```bash
+    streamlit run app.py
+    ```
+
+## Usage
+
+1. **Select Portfolio Stage:**  
+   Choose to build a single portfolio or compare multiple portfolios.
+
+2. **Select Assets:**  
+   Use the multi-select widgets to pick equities, alternatives, and interest-bearing assets.
+
+3. **Assign Weights:**  
+   Enter the desired weight for each asset. The tool checks that weights sum to 1.
+
+4. **Set Parameters:**  
+   Input your investment amount, allocation limits, and the analysis period.
+
+5. **Visualize & Compare:**  
+   View allocation pie charts and performance summaries for each portfolio.
+
+6. **Admin Mode:**  
+   Access advanced settings if you have admin privileges.
+
+## File Structure
+
+- `app.py` — Main Streamlit application.
+- `portfolio.py` — Calculations for the portfolio.
+- `visialisation.py` — Plotly and streamlit visualisations.
+- `requirements.txt` — Python dependencies.
+- `README.md` — Project documentation.
+
+## Customization
+
+- **Assets:**  
+  Update the asset universe in the code or via admin tools as needed.
+
+- **Styling:**  
+  Modify Streamlit components for a custom look and feel.
+
+- **Model portfolios:**  
+  Modify the assets and weights in the model portfolios if wanted.
+
+## Contributing
+
+Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change.
+
+
+---
+
+**Developed by Tuva & contributors.**

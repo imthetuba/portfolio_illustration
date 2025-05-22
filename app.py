@@ -204,11 +204,22 @@ def show_stage_4():
     categories, display_name_to_asset_id = get_categorized_assets(ASSETS_INDICES_MAP)
 
     # Initialize session state for multi_portfolios if not already
-    if 'multi_portfolios' not in st.session_state or len(st.session_state['multi_portfolios']) != num_portfolios:
+        # Initialize session state for multi_portfolios if not already
+    if 'multi_portfolios' not in st.session_state:
         st.session_state['multi_portfolios'] = [
             {'selected_shares': [], 'selected_alternative': [], 'selected_interest_bearing': [], 'weights': {}} 
             for _ in range(num_portfolios)
         ]
+    else:
+        # Adjust the length without resetting existing data
+        current_len = len(st.session_state['multi_portfolios'])
+        if num_portfolios > current_len:
+            for _ in range(num_portfolios - current_len):
+                st.session_state['multi_portfolios'].append(
+                    {'selected_shares': [], 'selected_alternative': [], 'selected_interest_bearing': [], 'weights': {}}
+                )
+        elif num_portfolios < current_len:
+            st.session_state['multi_portfolios'] = st.session_state['multi_portfolios'][:num_portfolios]
 
     cols = st.columns(num_portfolios)
     for i, col in enumerate(cols):
@@ -234,17 +245,19 @@ def show_stage_4():
                 key=f"int_{i}"
             )
             selected_display_names = mp['selected_shares'] + mp['selected_alternative'] + mp['selected_interest_bearing']
-            selected_assets = [display_name_to_asset_id[name] for name in selected_display_names]
+            selected_assets = sorted([display_name_to_asset_id[name] for name in selected_display_names])
             mp['selected_assets'] = selected_assets
 
             # Weights
+            
             weights = {}
             asset_only_weights = {}
             for asset in selected_assets:
                 display_name = ASSETS_INDICES_MAP[asset].get("display name", asset)
                 weight = st.number_input(
-                    f"Weight for {display_name} (Portfolio {i+1})", 
-                    min_value=0.0, max_value=1.0, value=mp['weights'].get(asset, 0.1), 
+                    f"Weight for {display_name} (Portfolio {i+1})",
+                    min_value=0.0, max_value=1.0,
+                    value=mp['weights'].get(asset, 0.1),
                     key=f"weight_{i}_{asset}"
                 )
                 weights[asset] = weight
