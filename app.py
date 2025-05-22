@@ -13,7 +13,7 @@ from portfolio import (
 )
 from datetime import datetime
 
-from visualisation import generate_summary_report
+from visualisation import generate_summary_report, show_weights
 
 # Prompt for username and password
 #username = st.text_input("Enter your Infront username:")
@@ -83,11 +83,14 @@ def show_stage_2():
 
 
     weights = {}
+    asset_only_weights = {}
     for asset in selected_assets:
         display_name = ASSETS_INDICES_MAP[asset].get("display name", asset)
         default_weight = default_weights.get(asset, 0.1)
         weight = st.number_input(f"Weight for {display_name}", min_value=0.0, max_value=1.0, value=default_weight)
         weights[asset] = weight
+        asset_only_weights[asset] = weight
+    
     # Sum the weights for the indices if there are duplicates
     for asset in selected_assets:
         index = ASSETS_INDICES_MAP[asset]['index']
@@ -96,6 +99,9 @@ def show_stage_2():
         else:
             weights[index] = weights[asset]
 
+    # dynamically show the asset weights
+    
+    show_weights(asset_only_weights)
 
 
     # Check if weights add up to 1
@@ -103,6 +109,7 @@ def show_stage_2():
         st.error("The weights must add up to 1. Please adjust the weights.")
 
     st.session_state['weights'] = weights
+    st.session_state['asset_only_weights'] = asset_only_weights
     
 
     allocation_limit = st.number_input("Allocation limit (Plus/minus %)", min_value=0, max_value=100, value=7)
@@ -123,6 +130,7 @@ def show_stage_3():
     st.title("Results")
     selected_assets = st.session_state.get('selected_assets', [])
     weights = st.session_state.get('weights', {})
+    asset_only_weights = st.session_state.get('asset_only_weights', {})
     allocation_limit = st.session_state.get('allocation_limit', 50)
     start_date = st.session_state.get('start_date', datetime(2022, 1, 1))
     end_date = st.session_state.get('end_date', datetime.today())
@@ -136,10 +144,10 @@ def show_stage_3():
 
     selected_indices = list({ASSETS_INDICES_MAP[asset]["index"] for asset in selected_assets})
     combined_data = fetch_data_infront(selected_assets, selected_indices, start_date, end_date)
-    combined_data = clean_data(combined_data)
+    combined_data, period = clean_data(combined_data)
     combined_data = indexed_net_to_100(combined_data)
     combined_data = period_change(combined_data)
-    combined_data = OGC_adjusted_Period_Change(combined_data)
+    combined_data = OGC_adjusted_Period_Change(combined_data, period)
     combined_data = indexed_OGC_adjusted_to_100(combined_data)
     st.session_state['combined_data'] = combined_data
 
@@ -148,7 +156,7 @@ def show_stage_3():
 
     
     # Generate summary report
-    generate_summary_report(combined_data, date_holdings_df, start_investment, allocation_limit, weights)
+    generate_summary_report(combined_data, date_holdings_df, start_investment, allocation_limit, weights, asset_only_weights, period)
 
     if st.button("Back"):
         st.session_state['page'] = 1

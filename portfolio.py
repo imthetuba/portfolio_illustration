@@ -1,7 +1,6 @@
 import pandas as pd
 import streamlit as st
 from InfrontConnect import infront
-PERIOD = 252
 
 # Load assets and indices map
 def load_assets_indices_map(csv_file):
@@ -76,7 +75,44 @@ def clean_data(combined_data):
     common_dates = combined_data.groupby('Name')['date'].apply(set).agg(lambda x: set.intersection(*x))
     common_dates = pd.DataFrame(list(common_dates), columns=['date'])
     combined_data = combined_data[combined_data['date'].isin(common_dates['date'])]
-    return combined_data
+    
+    # Convert to datetime if not already
+    combined_data['date'] = pd.to_datetime(combined_data['date'])
+    # Sort by date
+    combined_data = combined_data.sort_values('date')
+    # Calculate the most common date difference per asset/index
+    date_diffs = (
+        combined_data
+        .sort_values(['Name', 'date'])
+        .groupby('Name')['date']
+        .diff()
+        .dropna()
+    )
+    most_common_diff = date_diffs.mode()[0]
+    st.write(f"Most common date difference: {most_common_diff}")
+
+    if most_common_diff.days > 15:
+        st.info("Detected monthly data.")
+        period = 12
+        # Keep only end-of-month values (or after 25th)
+        combined_data['day'] = combined_data['date'].dt.day
+        combined_data['month'] = combined_data['date'].dt.month
+        combined_data['year'] = combined_data['date'].dt.year
+        # Keep only rows where day >= 25
+        combined_data = combined_data[combined_data['day'] >= 25]
+        # For each asset/index and month, keep the last available row
+        combined_data = combined_data.sort_values('date').groupby(['Name', 'year', 'month']).tail(1)
+        # Drop helper columns
+        combined_data = combined_data.drop(columns=['day', 'month', 'year'])
+        
+    elif most_common_diff.days > 5:
+        st.info("Detected weekly data.")
+        period = 52
+    else:
+        st.info("Detected daily data.")
+        period = 252
+
+    return combined_data, period
 
 def indexed_net_to_100(combined_data):
     combined_data['Period Net Return'] = combined_data.groupby('Name')['last'].transform(lambda x: (x / x.iloc[0]) - 1)
@@ -91,12 +127,12 @@ def period_change(combined_data):
 
 
 
-def OGC_adjusted_Period_Change(combined_data):
+def OGC_adjusted_Period_Change(combined_data, period):
     def calculate_adjusted_period_change(row):
         if row['Type'] == 'Index':
             return row['Period Change']
         else:
-            return row['Period Change'] - ASSETS_INDICES_MAP[row['Name']]["OGC ex. post"] / PERIOD
+            return row['Period Change'] - ASSETS_INDICES_MAP[row['Name']]["OGC ex. post"] / period
     combined_data['OGC Adjusted Period Change'] = combined_data.apply(calculate_adjusted_period_change, axis=1)
     combined_data['OGC Adjusted Period Change'] = combined_data['OGC Adjusted Period Change'].fillna(0)
     return combined_data

@@ -5,12 +5,13 @@ import pdfkit
 
 import plotly.express as px
 
-from portfolio import ASSETS_INDICES_MAP, PERIOD
+from portfolio import ASSETS_INDICES_MAP
+
+RISK_FREE_RATE = 0.01  # Example risk-free rate, adjust as needed
 
 # You may need to configure pdfkit with the path to wkhtmltopdf
 config = pdfkit.configuration()  # or pdfkit.configuration(wkhtmltopdf='/path/to/wkhtmltopdf')
 
-# Make sure ASSETS_INDICES_MAP and PERIOD are defined elsewhere in your code
 def plot_holdings(combined_data):
     # Separate the data into assets and indices
     assets_data = combined_data[combined_data['Type'] == 'Asset']
@@ -120,7 +121,22 @@ def calculate_drawdowns(data, column, window=500):
     data['Drawdown'] = (data[column] - data['Max']) / data['Max']
     return data
 
+def show_weights(weights):
+    """
+    Display a pie chart of asset weights using Plotly and Streamlit.
+    """
+    # Map asset IDs to display names
+    asset_labels = [ASSETS_INDICES_MAP[asset].get("display name", asset) for asset in weights.keys()]
+    values = list(weights.values())
 
+    fig = px.pie(
+        names=asset_labels,
+        values=values,
+        title="Asset Allocation Weights",
+        hole=0.3
+    )
+    fig.update_traces(textinfo='percent+label')
+    st.plotly_chart(fig)
 
 def plot_drawdowns(portfolio_data, index_data, window=500):
     """
@@ -168,15 +184,43 @@ def plot_drawdowns(portfolio_data, index_data, window=500):
 
     return fig
 
-def calculate_sharpe_ratio(returns, risk_free_rate=0.01):
+def calculate_sharpe_ratio(returns,period, risk_free_rate=RISK_FREE_RATE ):
     """
     Calculate the Sharpe Ratio for a given series of returns.
     """
-    excess_returns = returns - risk_free_rate / PERIOD
-    annualized_excess_returns = excess_returns.mean() * PERIOD
-    annualized_volatility = excess_returns.std() * np.sqrt(PERIOD)
+    excess_returns = returns - risk_free_rate / period
+    annualized_excess_returns = excess_returns.mean() * period
+    annualized_volatility = excess_returns.std() * np.sqrt(period)
     sharpe_ratio = annualized_excess_returns / annualized_volatility
     return sharpe_ratio
+
+def calculate_variance(returns):
+    """
+    Calculate the variance of a given series of returns.
+    """
+    return np.var(returns)
+
+def calculate_annualized_return(returns, period):
+    """
+    Calculate the annualized return for a given series of returns.
+    """
+    return (1 + returns).prod() ** (period / len(returns)) - 1
+
+def calculate_maximum_drawdown(returns):
+    """
+    Calculate the maximum drawdown for a given series of returns.
+    """
+    cumulative_returns = (1 + returns).cumprod()
+    peak = cumulative_returns.cummax()
+    drawdown = (cumulative_returns - peak) / peak
+    max_drawdown = drawdown.min()
+    return max_drawdown
+
+def calculate_volatility(returns,period):
+    """
+    Calculate the volatility for a given series of returns.
+    """
+    return returns.std() * np.sqrt(period)
 
 def export_report_to_excel(combined_data, date_holdings_df, start_investment, allocation_limit, weights, sharpe_ratio):
     """
@@ -203,28 +247,54 @@ def export_report_to_excel(combined_data, date_holdings_df, start_investment, al
 
     st.success("Report exported to summary_report.xlsx")
 
-
-def generate_summary_report(combined_data, date_holdings_df, start_investment, allocation_limit, weights):
+def generate_summary_report(combined_data, date_holdings_df, start_investment, allocation_limit, weights, asset_weights, period):
     """
     Generate a summary report for the portfolio.
     """
     st.header("Summary Report")
 
-    # Display key metrics
     st.subheader("Key Metrics")
-    st.metric(label="Start Investment Amount", value=f"{start_investment} SEK")
-    st.metric(label="Allocation Limit", value=f"{allocation_limit}%")
-
-    # Calculate and display Sharpe Ratio
+    st.write("This section provides key metrics for the portfolio. Variance and Sharpe Ratio are calculated based on the portfolio returns after ongoing charge (OGC).")
+    st.write("The Sharpe Ratio is a measure of risk-adjusted return, while variance indicates the volatility of the portfolio.")
+    st.write("The Sharpe Ratio is calculated using a risk-free rate of " + str(RISK_FREE_RATE) + " per year.")
+    st.write("Period value " + str(period) + " is used to annualize the returns and volatility.")
     portfolio_returns = combined_data[combined_data['Type'] == 'Asset']['OGC Adjusted Period Change']
-    sharpe_ratio = calculate_sharpe_ratio(portfolio_returns)
-    st.metric(label="Sharpe Ratio", value=f"{sharpe_ratio:.2f}")
+    sharpe_ratio = calculate_sharpe_ratio(portfolio_returns, period)
+    variance = calculate_variance(portfolio_returns)
+    max_drawdown = calculate_maximum_drawdown(portfolio_returns)
+    volatility = calculate_volatility(portfolio_returns, period)
+    annualized_return = calculate_annualized_return(portfolio_returns, period)
+    metrics_df = pd.DataFrame({
+        "Metric": [
+            "Start Investment Amount",
+            "Allocation Limit",
+            "Sharpe Ratio",
+            "Variance",
+            "Max Drawdown",
+            "Volatility",
+            "Annualized Return"
+        ],
+        "Value": [
+            f"{start_investment} SEK",
+            f"{allocation_limit}%",
+            f"{sharpe_ratio:.2f}",
+            f"{variance * 100:.2f}%",
+            f"{max_drawdown * 100:.2f}%",
+            f"{volatility * 100:.2f}%",
+            f"{annualized_return * 100:.2f}%"
+        ]
+    })
+    st.table(metrics_df)
 
     # Display weights
     st.subheader("Asset Weights")
     for asset, weight in weights.items():
         display_name = ASSETS_INDICES_MAP[asset].get("display name", asset)
         st.write(f"{display_name}: {weight:.2f}")
+
+    # Show weights pie chart
+    st.subheader("Asset Allocation Weights")     
+    show_weights(asset_weights)
 
     # Plot the holdings
     st.subheader("Holdings Over Time")
