@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import streamlit as st
 import pdfkit
-
+import plotly.graph_objects as go
 import plotly.express as px
 
 from portfolio import ASSETS_INDICES_MAP
@@ -121,22 +121,21 @@ def calculate_drawdowns(data, column, window=500):
     data['Drawdown'] = (data[column] - data['Max']) / data['Max']
     return data
 
-def show_weights(weights):
+def show_weights(weights, key=None):
     """
     Display a pie chart of asset weights using Plotly and Streamlit.
     """
-    # Map asset IDs to display names
     asset_labels = [ASSETS_INDICES_MAP[asset].get("display name", asset) for asset in weights.keys()]
     values = list(weights.values())
 
     fig = px.pie(
         names=asset_labels,
         values=values,
-        title="Asset Allocation Weights",
+        title="Allocation Weights",
         hole=0.3
     )
     fig.update_traces(textinfo='percent+label')
-    st.plotly_chart(fig)
+    st.plotly_chart(fig, key=key)
 
 def plot_drawdowns(portfolio_data, index_data, window=500):
     """
@@ -247,7 +246,106 @@ def export_report_to_excel(combined_data, date_holdings_df, start_investment, al
 
     st.success("Report exported to summary_report.xlsx")
 
+def plot_multi_portfolio_total_holdings_assets(finished_portfolios):
+    """
+    Plot total holdings in assets over time for each portfolio.
+    """
+    fig = go.Figure()
+    for name, data in finished_portfolios.items():
+        df = data["date_holdings_df"]
+        # Filter for assets only
+        assets_df = df[df['Type'] == 'Asset']
+        fig.add_trace(go.Scatter(
+            x=assets_df['Date'],
+            y=assets_df['Total Holdings'],
+            mode='lines',
+            name=name
+        ))
+    fig.update_layout(
+        title="Total Holdings in Assets Over Time (All Portfolios)",
+        xaxis_title='Date',
+        yaxis_title='Total Holdings',
+        legend_title='Portfolio',
+        template='plotly_white'
+    )
+    return fig
+
+def plot_multi_portfolio_total_holdings_indices(finished_portfolios):
+    """
+    Plot total holdings in indices over time for each portfolio.
+    """
+    fig = go.Figure()
+    for name, data in finished_portfolios.items():
+        df = data["date_holdings_df"]
+        # Filter for indices only
+        indices_df = df[df['Type'] == 'Index']
+        fig.add_trace(go.Scatter(
+            x=indices_df['Date'],
+            y=indices_df['Total Holdings'],
+            mode='lines',
+            name=name
+        ))
+    fig.update_layout(
+        title="Total Holdings in Indices Over Time (All Portfolios)",
+        xaxis_title='Date',
+        yaxis_title='Total Holdings',
+        legend_title='Portfolio',
+        template='plotly_white'
+    )
+    return fig
+
+def plot_multi_portfolio_drawdowns_assets(finished_portfolios):
+    """
+    Plot drawdowns for assets only, for each portfolio.
+    """
+    fig = go.Figure()
+    for name, data in finished_portfolios.items():
+        df = data["date_holdings_df"]
+        assets_df = df[df['Type'] == 'Asset']
+        if not assets_df.empty:
+            drawdown = calculate_drawdowns(assets_df, 'Total Holdings')
+            fig.add_trace(go.Scatter(
+                x=drawdown['Date'],
+                y=drawdown['Drawdown'],
+                mode='lines',
+                name=name
+            ))
+    fig.update_layout(
+        title="Drawdowns in Assets (All Portfolios)",
+        xaxis_title="Date",
+        yaxis_title="Drawdown",
+        legend_title="Portfolio",
+        template="plotly_white"
+    )
+    return fig
+
+def plot_multi_portfolio_drawdowns_indices(finished_portfolios):
+    """
+    Plot drawdowns for indices only, for each portfolio.
+    """
+    fig = go.Figure()
+    for name, data in finished_portfolios.items():
+        df = data["date_holdings_df"]
+        indices_df = df[df['Type'] == 'Index']
+        if not indices_df.empty:
+            drawdown = calculate_drawdowns(indices_df, 'Total Holdings')
+            fig.add_trace(go.Scatter(
+                x=drawdown['Date'],
+                y=drawdown['Drawdown'],
+                mode='lines',
+                name=name
+            ))
+    fig.update_layout(
+        title="Drawdowns in Indices (All Portfolios)",
+        xaxis_title="Date",
+        yaxis_title="Drawdown",
+        legend_title="Portfolio",
+        template="plotly_white"
+    )
+    return fig
+
 def generate_summary_report(combined_data, date_holdings_df, start_investment, allocation_limit, weights, asset_weights, period):
+
     """
     Generate a summary report for the portfolio.
     """
@@ -337,3 +435,93 @@ def generate_summary_report(combined_data, date_holdings_df, start_investment, a
     if st.button("Export Report to Excel"):
         export_report_to_excel(combined_data, date_holdings_df, start_investment, allocation_limit, weights, sharpe_ratio)
 
+
+def generate_multi_summary_report(finished_portfolios):
+    """
+    Display a summary report comparing multiple portfolios.
+    finished_portfolios: dict of {portfolio_name: {combined_data, date_holdings_df, weights, asset_only_weights, period}}
+    """
+    st.header("Multi-Portfolio Comparison")
+
+    
+
+    # Show the weights for each portfolio
+    for name, data in finished_portfolios.items():
+        st.subheader(f"Portfolio: {name}")
+        asset_only_weights = data["asset_only_weights"]
+        st.markdown("### Asset Weights:")
+        show_weights(asset_only_weights, key=name + "_asset_only")
+
+        # Show index weights for each portfolio
+        # Remove assets in asset_only_weights from weights to get only indices
+        weights = data["weights"].copy()
+        asset_only_weights = data["asset_only_weights"]
+        index_only_weights = {k: v for k, v in weights.items() if k not in asset_only_weights}
+        st.markdown("### Index Weights:")
+        show_weights(index_only_weights, key=name + "_index_only")
+
+    # Plot all portfolios on the same chart
+    st.subheader("Portfolio Value Comparison")
+    fig_portfolio = plot_multi_portfolio_total_holdings_assets(finished_portfolios)
+    fig_portfolio_indexes = plot_multi_portfolio_total_holdings_indices(finished_portfolios)
+    st.plotly_chart(fig_portfolio)
+    st.plotly_chart(fig_portfolio_indexes)
+
+    # Plot portfolios vs their respctive indices
+    st.subheader("Portfolio vs Index Comparison")   
+    for name, data in finished_portfolios.items():
+        df = data["date_holdings_df"]
+        # Plot both assets and indices for each portfolio in the same plot
+        st.markdown("#### Assets vs Indices for Portfolio: " + name)
+        st.plotly_chart(plot_date_vs_total_holdings(df), key=name + "_assets_vs_indices")
+    
+
+    # Plot drawdowns for all portfolios
+    st.subheader("Drawdowns Comparison")
+    fig_drawdowns_assets = plot_multi_portfolio_drawdowns_assets(finished_portfolios)
+    st.plotly_chart(fig_drawdowns_assets)
+
+    # Show a table of key metrics for each portfolio
+    metrics_list = []
+    for name, data in finished_portfolios.items():
+        df = data["date_holdings_df"]
+        period = data["period"]
+        returns = df['Total Holdings'].pct_change().dropna()
+        sharpe = calculate_sharpe_ratio(returns, period)
+        max_dd = calculate_maximum_drawdown(returns)
+        volatility = calculate_volatility(returns, period)
+        variance = calculate_variance(returns)
+        ann_return = calculate_annualized_return(returns, period)
+
+        metrics_list.append({
+            "Portfolio": name,
+            "Sharpe Ratio": f"{sharpe:.2f}",
+            "Variance": f"{variance:.2%}",
+            "Standard deviation": f"{volatility:.2%}",
+            "Max Drawdown": f"{max_dd:.2%}",
+            "Annualized Return": f"{ann_return:.2%}"
+        })
+    if metrics_list:
+        metrics_df = pd.DataFrame(metrics_list).set_index('Portfolio')
+        st.subheader("Key Metrics Comparison")
+        st.table(metrics_df)
+
+
+    # Chnage the display names in the combined data
+    for name, data in finished_portfolios.items():
+        combined_data = data["combined_data"]
+        combined_data['Name'] = combined_data['Name'].map(lambda x: ASSETS_INDICES_MAP[x]["display name"] if x in ASSETS_INDICES_MAP else x)
+        data["combined_data"] = combined_data
+    # Show the portfolio data for each portfolio
+    for name, data in finished_portfolios.items():
+        st.subheader(f"Portfolio Data: {name}")
+        st.write(data["combined_data"])
+    # export report to Excel
+    if st.button("Export Multi-Portfolio Report to Excel"):
+        with pd.ExcelWriter('multi_summary_report.xlsx') as writer:
+            for name, data in finished_portfolios.items():
+                combined_data = data["combined_data"]
+                date_holdings_df = data["date_holdings_df"]
+                combined_data.to_excel(writer, sheet_name=f'{name}_Portfolio_Data', index=False)
+                date_holdings_df.to_excel(writer, sheet_name=f'{name}_Date_vs_Total_Holdings', index=False)
+        st.success("Multi-Portfolio Report exported to multi_summary_report.xlsx")

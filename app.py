@@ -13,7 +13,7 @@ from portfolio import (
 )
 from datetime import datetime
 
-from visualisation import generate_summary_report, show_weights
+from visualisation import generate_summary_report, show_weights, generate_multi_summary_report
 
 # Prompt for username and password
 #username = st.text_input("Enter your Infront username:")
@@ -34,22 +34,36 @@ def show_stage_1():
     st.title("Portfolio Setup")
     st.write("Choose a standard portfolio or create your own:")
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
     with col1:
         if st.button("Equity Heavy Portfolio"):
             st.session_state['use_default'] = True
             st.session_state['portfolio_file'] = "standard_equity_portfolio.csv"
+            st.session_state['multiple_portfolios'] = False
             st.session_state['page'] = 2
     with col2:
         if st.button("Interest Bearing Heavy Portfolio"):
             st.session_state['use_default'] = True
             st.session_state['portfolio_file'] = "standard_interest_portfolio.csv"
+            st.session_state['multiple_portfolios'] = False
             st.session_state['page'] = 2
     with col3:
-        if st.button("Create Custom Portfolio"):
+        if st.button("Create One Custom Portfolio"):
             st.session_state['use_default'] = False
             st.session_state['portfolio_file'] = None
+            st.session_state['multiple_portfolios'] = False
             st.session_state['page'] = 2
+
+    with col4:
+        num_portfolios = st.number_input(
+            "How many portfolios do you want to compare?",
+            min_value=2, max_value=4, value=2, key="num_portfolios"
+        )
+        if st.button("Compare Multiple Portfolios"):
+            st.session_state['use_default'] = False
+            st.session_state['portfolio_file'] = None
+            st.session_state['multiple_portfolios'] = True
+            st.session_state['page'] = 4
 
 def show_stage_2():
     st.title("Portfolio Selection & Adjustment")
@@ -124,7 +138,162 @@ def show_stage_2():
     st.session_state['end_date'] = end_date
 
     if st.button("Calculate Portfolio"):
+
         st.session_state['page'] = 3
+
+def show_stage_4():
+    st.title("Compare Multiple Portfolios")
+    num_portfolios = st.session_state.get('num_portfolios', 2)
+    categories, display_name_to_asset_id = get_categorized_assets(ASSETS_INDICES_MAP)
+
+    # Initialize session state for multi_portfolios if not already
+    if 'multi_portfolios' not in st.session_state or len(st.session_state['multi_portfolios']) != num_portfolios:
+        st.session_state['multi_portfolios'] = [
+            {'selected_shares': [], 'selected_alternative': [], 'selected_interest_bearing': [], 'weights': {}} 
+            for _ in range(num_portfolios)
+        ]
+
+    cols = st.columns(num_portfolios)
+    for i, col in enumerate(cols):
+        with col:
+            st.markdown(f"### Portfolio {i+1}")
+            mp = st.session_state['multi_portfolios'][i]
+            mp['selected_shares'] = st.multiselect(
+                f"Select Equity (Portfolio {i+1})", 
+                categories["Equity"], 
+                default=mp['selected_shares'], 
+                key=f"shares_{i}"
+            )
+            mp['selected_alternative'] = st.multiselect(
+                f"Select Alternative (Portfolio {i+1})", 
+                categories["Alternative"], 
+                default=mp['selected_alternative'], 
+                key=f"alt_{i}"
+            )
+            mp['selected_interest_bearing'] = st.multiselect(
+                f"Select Interest Bearing (Portfolio {i+1})", 
+                categories["Interest Bearing"], 
+                default=mp['selected_interest_bearing'], 
+                key=f"int_{i}"
+            )
+            selected_display_names = mp['selected_shares'] + mp['selected_alternative'] + mp['selected_interest_bearing']
+            selected_assets = [display_name_to_asset_id[name] for name in selected_display_names]
+            mp['selected_assets'] = selected_assets
+
+            # Weights
+            weights = {}
+            asset_only_weights = {}
+            for asset in selected_assets:
+                display_name = ASSETS_INDICES_MAP[asset].get("display name", asset)
+                weight = st.number_input(
+                    f"Weight for {display_name} (Portfolio {i+1})", 
+                    min_value=0.0, max_value=1.0, value=mp['weights'].get(asset, 0.1), 
+                    key=f"weight_{i}_{asset}"
+                )
+                weights[asset] = weight
+                asset_only_weights[asset] = weight
+            # Sum the weights for the indices if there are duplicates
+            for asset in selected_assets:
+                index = ASSETS_INDICES_MAP[asset]['index']
+                if index in weights:
+                    weights[index] += weights[asset]
+                else:
+                    weights[index] = weights[asset]
+
+            mp['weights'] = weights
+            mp['asset_only_weights'] = asset_only_weights
+            
+
+                    
+            # Optional: check if weights sum to 1
+            if abs(sum(asset_only_weights.values()) - 1.0) > 0.01:
+                st.error("The weights must add up to 1. Please adjust the weights.")
+
+            # Show weights pie chart
+            show_weights(asset_only_weights, key=f"weights_chart_{i}")
+
+
+    #Start investment amount
+    start_investment = st.number_input("Start investment amount (SEK)", min_value=0, value=100000)
+    st.session_state['start_investment'] = start_investment
+
+    # Start and end date
+    start_date = st.date_input("Start date", datetime(2022, 1, 1))  
+    end_date = st.date_input("End date", datetime.today())
+    st.session_state['start_date'] = start_date
+    st.session_state['end_date'] = end_date
+
+    #allocation limit
+    allocation_limit = st.number_input("Allocation limit (Plus/minus %)", min_value=0, max_value=100, value=7)
+    st.session_state['allocation_limit'] = allocation_limit
+
+
+    # Save back to session state
+    st.session_state['multi_portfolios'] = st.session_state['multi_portfolios']
+
+
+    if st.button("Calculate & Compare"):
+        st.session_state['page'] = 5  # You can add a new stage for results/plotting
+
+    if st.button("Back"):
+        st.session_state['page'] = 1
+
+def show_stage_5():
+    st.title("Portfolio Comparison Results")
+    portfolios = st.session_state.get('multi_portfolios', [])
+    allocation_limit = st.session_state.get('allocation_limit', 50)
+    start_date = st.session_state.get('start_date', datetime(2022, 1, 1))
+    end_date = st.session_state.get('end_date', datetime.today())
+    start_investment = st.session_state.get('start_investment', 100000)
+    
+    if not portfolios:
+        st.warning("No portfolios selected. Please go back and select portfolios.")
+        if st.button("Back"):
+            st.session_state['page'] = 1
+        return
+
+    # Dict to hold the finished portfolios
+    finished_portfolios = {}
+    # Iterate through each portfolio and fetch data
+
+    # Fetch data for each portfolio and calculate results
+    for i, portfolio in enumerate(portfolios):
+        selected_assets = portfolio['selected_assets']
+        weights = portfolio['weights']
+        asset_only_weights = portfolio['asset_only_weights']    
+
+        
+        if not selected_assets or not weights:
+            st.warning(f"Portfolio {i+1} is incomplete. Please go back and select assets.")
+            continue
+
+        selected_indices = list({ASSETS_INDICES_MAP[asset]["index"] for asset in selected_assets})
+        combined_data = fetch_data_infront(selected_assets, selected_indices, start_date, end_date)
+        combined_data, period = clean_data(combined_data, True)
+        combined_data = indexed_net_to_100(combined_data)
+        combined_data = period_change(combined_data)
+        combined_data = OGC_adjusted_Period_Change(combined_data, period)
+        combined_data = indexed_OGC_adjusted_to_100(combined_data)
+
+        combined_data, date_holdings_df  = create_portfolio(combined_data, weights, start_investment, allocation_limit)    
+        
+        # save the portfolio data
+        finished_portfolios[f"Portfolio {i+1}"] = {
+            "combined_data": combined_data,
+            "date_holdings_df": date_holdings_df,
+            "weights": weights,
+            "asset_only_weights": asset_only_weights,
+            "period": period
+        }
+        print("Period ", period)
+        # Generate summary report for each portfolio
+        #generate_summary_report(combined_data, date_holdings_df, start_investment, allocation_limit, weights, asset_only_weights, period)
+
+    # Generate multi-portfolio summary report
+    generate_multi_summary_report(finished_portfolios)
+
+    if st.button("Back"):
+        st.session_state['page'] = 1
 
 def show_stage_3():
     st.title("Results")
@@ -171,6 +340,10 @@ def main():
         show_stage_2()
     elif st.session_state['page'] == 3:
         show_stage_3()
+    elif st.session_state['page'] == 4:
+        show_stage_4()
+    elif st.session_state['page'] == 5:
+        show_stage_5()
 
 if __name__ == "__main__":
     main()

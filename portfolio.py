@@ -69,7 +69,7 @@ def fetch_data_infront(tickers, index_tickers, start_date, end_date):
     except Exception as e:
         raise RuntimeError(f"Error fetching data: {e}")
 
-def clean_data(combined_data):
+def clean_data(combined_data, is_multiple_portfolio=False):
     if 'date' not in combined_data.columns:
         combined_data = combined_data.reset_index()
     common_dates = combined_data.groupby('Name')['date'].apply(set).agg(lambda x: set.intersection(*x))
@@ -91,7 +91,7 @@ def clean_data(combined_data):
     most_common_diff = date_diffs.mode()[0]
     st.write(f"Most common date difference: {most_common_diff}")
 
-    if most_common_diff.days > 15:
+    if most_common_diff.days > 15 or is_multiple_portfolio:
         st.info("Detected monthly data.")
         period = 12
         # Keep only end-of-month values (or after 25th)
@@ -104,7 +104,7 @@ def clean_data(combined_data):
         combined_data = combined_data.sort_values('date').groupby(['Name', 'year', 'month']).tail(1)
         # Drop helper columns
         combined_data = combined_data.drop(columns=['day', 'month', 'year'])
-        
+
     elif most_common_diff.days > 5:
         st.info("Detected weekly data.")
         period = 52
