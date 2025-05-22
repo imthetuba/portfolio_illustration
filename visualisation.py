@@ -4,6 +4,14 @@ import streamlit as st
 import pdfkit
 import plotly.graph_objects as go
 import plotly.express as px
+import plotly.io as pio
+
+
+# default colors
+
+pio.templates["my_custom"] = pio.templates["plotly_white"]
+pio.templates["my_custom"].layout.colorway = ["#636EFA", "#EF553B", "#00CC96", "#AB63FA"]
+pio.templates.default = "my_custom"
 
 from portfolio import ASSETS_INDICES_MAP
 

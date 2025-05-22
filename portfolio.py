@@ -69,7 +69,7 @@ def fetch_data_infront(tickers, index_tickers, start_date, end_date):
     except Exception as e:
         raise RuntimeError(f"Error fetching data: {e}")
 
-def clean_data(combined_data, is_multiple_portfolio=False):
+def clean_data(combined_data,data_frequency, is_multiple_portfolio=False):
     if 'date' not in combined_data.columns:
         combined_data = combined_data.reset_index()
     common_dates = combined_data.groupby('Name')['date'].apply(set).agg(lambda x: set.intersection(*x))
@@ -91,23 +91,30 @@ def clean_data(combined_data, is_multiple_portfolio=False):
     most_common_diff = date_diffs.mode()[0]
     st.write(f"Most common date difference: {most_common_diff}")
 
-    if most_common_diff.days > 15 or is_multiple_portfolio:
+    if most_common_diff.days > 20 or is_multiple_portfolio:
         st.info("Detected monthly data.")
         period = 12
-        # Keep only end-of-month values (or after 25th)
-        combined_data['day'] = combined_data['date'].dt.day
-        combined_data['month'] = combined_data['date'].dt.month
+        # Keep only the last day of each month for each asset/index
         combined_data['year'] = combined_data['date'].dt.year
-        # Keep only rows where day >= 25
-        combined_data = combined_data[combined_data['day'] >= 25]
-        # For each asset/index and month, keep the last available row
+        combined_data['month'] = combined_data['date'].dt.month
         combined_data = combined_data.sort_values('date').groupby(['Name', 'year', 'month']).tail(1)
-        # Drop helper columns
-        combined_data = combined_data.drop(columns=['day', 'month', 'year'])
+        combined_data = combined_data.drop(columns=['year', 'month'])
+    elif data_frequency == "monthly":
+        st.info("Chosen monthly data.")
+        period = 12
 
+        # Keep only the last day of each month for each asset/index
+        combined_data['year'] = combined_data['date'].dt.year
+        combined_data['month'] = combined_data['date'].dt.month
+        combined_data = combined_data.sort_values('date').groupby(['Name', 'year', 'month']).tail(1)
+        combined_data = combined_data.drop(columns=['year', 'month'])
     elif most_common_diff.days > 5:
         st.info("Detected weekly data.")
         period = 52
+
+    elif most_common_diff.days > 300 or data_frequency == "Yearly":
+        st.info("Detected yearly data.")
+        period = 1
     else:
         st.info("Detected daily data.")
         period = 252

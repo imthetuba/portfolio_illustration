@@ -34,6 +34,21 @@ def show_stage_1():
     st.title("Portfolio Setup")
     st.write("Choose a standard portfolio or create your own:")
 
+    # Option to choose data frequency
+    data_frequency = st.radio(
+        "Data frequency:",
+        options=["Daily (most detailed)", "Monthly (less detailed)", "Yearly (least detailed)"],
+        index=0,
+        help="The least detailed asset price will determine level of detail. Choose monthly or yearly if you want to override the default daily frequency.",
+    )
+    if data_frequency.startswith("Daily"):
+        st.session_state['data_frequency'] = "daily"
+    elif data_frequency.startswith("Monthly"):
+        st.session_state['data_frequency'] = "monthly"
+    elif data_frequency.startswith("Yearly"):
+        st.session_state['data_frequency'] = "yearly"
+
+
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         if st.button("Equity Heavy Portfolio"):
@@ -245,6 +260,7 @@ def show_stage_5():
     start_date = st.session_state.get('start_date', datetime(2022, 1, 1))
     end_date = st.session_state.get('end_date', datetime.today())
     start_investment = st.session_state.get('start_investment', 100000)
+    data_frequency = st.session_state.get('data_frequency', "daily")
     
     if not portfolios:
         st.warning("No portfolios selected. Please go back and select portfolios.")
@@ -269,7 +285,7 @@ def show_stage_5():
 
         selected_indices = list({ASSETS_INDICES_MAP[asset]["index"] for asset in selected_assets})
         combined_data = fetch_data_infront(selected_assets, selected_indices, start_date, end_date)
-        combined_data, period = clean_data(combined_data, True)
+        combined_data, period = clean_data(combined_data, data_frequency, True)
         combined_data = indexed_net_to_100(combined_data)
         combined_data = period_change(combined_data)
         combined_data = OGC_adjusted_Period_Change(combined_data, period)
@@ -305,6 +321,8 @@ def show_stage_3():
     end_date = st.session_state.get('end_date', datetime.today())
     start_investment = st.session_state.get('start_investment', 100000)
     
+    data_frequency = st.session_state.get('data_frequency', "daily")
+    
     if not selected_assets or not weights:
         st.warning("No portfolio selected. Please go back and select assets.")
         if st.button("Back"):
@@ -313,7 +331,7 @@ def show_stage_3():
 
     selected_indices = list({ASSETS_INDICES_MAP[asset]["index"] for asset in selected_assets})
     combined_data = fetch_data_infront(selected_assets, selected_indices, start_date, end_date)
-    combined_data, period = clean_data(combined_data)
+    combined_data, period = clean_data(combined_data, data_frequency)
     combined_data = indexed_net_to_100(combined_data)
     combined_data = period_change(combined_data)
     combined_data = OGC_adjusted_Period_Change(combined_data, period)
