@@ -443,44 +443,6 @@ def generate_multi_summary_report(finished_portfolios):
     """
     st.header("Multi-Portfolio Comparison")
 
-    
-
-    # Show the weights for each portfolio
-    for name, data in finished_portfolios.items():
-        st.subheader(f"Portfolio: {name}")
-        asset_only_weights = data["asset_only_weights"]
-        st.markdown("### Asset Weights:")
-        show_weights(asset_only_weights, key=name + "_asset_only")
-
-        # Show index weights for each portfolio
-        # Remove assets in asset_only_weights from weights to get only indices
-        weights = data["weights"].copy()
-        asset_only_weights = data["asset_only_weights"]
-        index_only_weights = {k: v for k, v in weights.items() if k not in asset_only_weights}
-        st.markdown("### Index Weights:")
-        show_weights(index_only_weights, key=name + "_index_only")
-
-    # Plot all portfolios on the same chart
-    st.subheader("Portfolio Value Comparison")
-    fig_portfolio = plot_multi_portfolio_total_holdings_assets(finished_portfolios)
-    fig_portfolio_indexes = plot_multi_portfolio_total_holdings_indices(finished_portfolios)
-    st.plotly_chart(fig_portfolio)
-    st.plotly_chart(fig_portfolio_indexes)
-
-    # Plot portfolios vs their respctive indices
-    st.subheader("Portfolio vs Index Comparison")   
-    for name, data in finished_portfolios.items():
-        df = data["date_holdings_df"]
-        # Plot both assets and indices for each portfolio in the same plot
-        st.markdown("#### Assets vs Indices for Portfolio: " + name)
-        st.plotly_chart(plot_date_vs_total_holdings(df), key=name + "_assets_vs_indices")
-    
-
-    # Plot drawdowns for all portfolios
-    st.subheader("Drawdowns Comparison")
-    fig_drawdowns_assets = plot_multi_portfolio_drawdowns_assets(finished_portfolios)
-    st.plotly_chart(fig_drawdowns_assets)
-
     # Show a table of key metrics for each portfolio
     metrics_list = []
     for name, data in finished_portfolios.items():
@@ -504,8 +466,55 @@ def generate_multi_summary_report(finished_portfolios):
     if metrics_list:
         metrics_df = pd.DataFrame(metrics_list).set_index('Portfolio')
         st.subheader("Key Metrics Comparison")
+        st.write("This section provides key metrics for each portfolio. Variance and Sharpe Ratio are calculated based on the portfolio returns after ongoing charge (OGC).")
+        st.write("The Sharpe Ratio is a measure of risk-adjusted return, while variance indicates the volatility of the portfolio.")
+        st.write("The Sharpe Ratio is calculated using a risk-free rate of " + str(RISK_FREE_RATE) + " per year.")
+        st.write("Period value " + str(period) + " is used to annualize the returns and volatility.")
+        st.write("The table below shows the key metrics for each portfolio.")
         st.table(metrics_df)
 
+    # Plot all portfolios on the same chart
+    st.subheader("Portfolio Value Comparison")
+    st.write("This section shows the total holdings for each portfolio over time.")
+
+    fig_portfolio = plot_multi_portfolio_total_holdings_assets(finished_portfolios)
+    st.plotly_chart(fig_portfolio)
+
+        # Plot drawdowns for all portfolios
+    st.subheader("Drawdowns Comparison")
+    st.write("This section shows the drawdowns for each portfolio over time.")
+    st.write("The drawdown is calculated as the percentage drop from the maximum value.")
+    fig_drawdowns_assets = plot_multi_portfolio_drawdowns_assets(finished_portfolios)
+    st.plotly_chart(fig_drawdowns_assets)
+
+    # Show the weights for each portfolio
+    for name, data in finished_portfolios.items():
+        st.subheader(f"Portfolio: {name}")
+        asset_only_weights = data["asset_only_weights"]
+        st.markdown("### Asset Weights:")
+        show_weights(asset_only_weights, key=name + "_asset_only")
+
+        # Show index weights for each portfolio
+        # Remove assets in asset_only_weights from weights to get only indices
+        weights = data["weights"].copy()
+        asset_only_weights = data["asset_only_weights"]
+        index_only_weights = {k: v for k, v in weights.items() if k not in asset_only_weights}
+        st.markdown("### Index Weights:")
+        show_weights(index_only_weights, key=name + "_index_only")
+
+    
+
+    # Plot portfolios vs their respctive indices
+    st.subheader("Portfolio vs Index Comparison")   
+    st.write("This section shows the total holdings for each portfolio and its corresponding index over time.")
+    for name, data in finished_portfolios.items():
+        df = data["date_holdings_df"]
+        # Plot both assets and indices for each portfolio in the same plot
+        st.markdown("#### Assets vs Indices for Portfolio: " + name)
+    
+        st.plotly_chart(plot_date_vs_total_holdings(df), key=name + "_assets_vs_indices")
+    
+    
 
     # Chnage the display names in the combined data
     for name, data in finished_portfolios.items():
