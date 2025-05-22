@@ -71,9 +71,10 @@ def show_stage_1():
             st.session_state['page'] = 2
 
     with col4:
+        st.write("Right now only 2 portfolios can be compared at a time. This will be changed in the future. (Hopefully)")
         num_portfolios = st.number_input(
             "How many portfolios do you want to compare?",
-            min_value=2, max_value=4, value=2, key="num_portfolios"
+            min_value=2, max_value=2, value=2, key="num_portfolios"
         )
         if st.button("Compare Multiple Portfolios"):
             st.session_state['use_default'] = False

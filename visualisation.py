@@ -9,7 +9,7 @@ import plotly.io as pio
 
 # default colors
 
-pio.templates["my_custom"] = pio.templates["plotly_white"]
+pio.templates["my_custom"] = pio.templates["simple_white"]
 pio.templates["my_custom"].layout.colorway = ["#636EFA", "#EF553B", "#00CC96", "#AB63FA"]
 pio.templates.default = "my_custom"
 
@@ -55,11 +55,7 @@ def plot_date_vs_total_holdings(date_holdings_df):
     asset_id_to_display_name = {asset: attributes["display name"] for asset, attributes in ASSETS_INDICES_MAP.items()}
 
     # Create a line plot for total holdings
-    fig = px.line(date_holdings_df, x='Date', y='Total Holdings', color='Type', title='Date vs Total Holdings',
-                  color_discrete_map={
-                      'Index': 'red',
-                      'Asset': 'blue'
-                  })
+    fig = px.line(date_holdings_df, x='Date', y='Total Holdings', color='Type', title='Date vs Total Holdings')
 
     # Update the names in the legend to display names
     for trace in fig.data:
@@ -175,18 +171,13 @@ def plot_drawdowns(portfolio_data, index_data, window=500):
     drawdown_data = drawdown_data.dropna(subset=['Date'])
 
     # Create the plot
-    fig = px.line(drawdown_data, x='Date', y='Drawdown', color='Type', title='Drawdowns: Portfolio vs Index',
-                  color_discrete_map={
-                      'Portfolio Drawdown': 'blue',
-                      'Index Drawdown': 'red'
-                  })
+    fig = px.line(drawdown_data, x='Date', y='Drawdown', color='Type', title='Drawdowns: Portfolio vs Index')
 
     # Update layout for better visualization
     fig.update_layout(
         xaxis_title='Date',
         yaxis_title='Drawdown',
-        legend_title='Type',
-        template='plotly_white'
+        legend_title='Type'
     )
 
     return fig
