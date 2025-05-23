@@ -5,6 +5,7 @@ import pdfkit
 import plotly.graph_objects as go
 import plotly.express as px
 import plotly.io as pio
+from future_simulations import monte_carlo_simulation
 
 # TOTAL_HOLDINGS = 'Totalt innehav'
 TOTAL_HOLDINGS = 'Total Holdings'
@@ -573,3 +574,42 @@ def generate_multi_summary_report(finished_portfolios, allocation_limit):
                 combined_data.to_excel(writer, sheet_name=f'{name}_Portfolio_Data', index=False)
                 date_holdings_df.to_excel(writer, sheet_name=f'{name}_Date_vs_Total_Holdings', index=False)
         st.success("Multi-Portfolio Report exported to multi_summary_report.xlsx")
+
+
+def show_predictions(combined_data, data_frequency):
+    st.header("Monte Carlo Simulation")
+    st.write("This section allows you to run a Monte Carlo simulation on the portfolio returns.")
+    st.write("The simulation generates a range of possible future values for the portfolio based on historical returns.")
+    st.write("The simulation uses a normal distribution to model the returns, and the number of simulations can be adjusted.")
+    st.write("This simulation only works with monthly data. If the data is not in monthly format, please select monthly data.")
+    if combined_data is None:
+        st.warning("Please calculate a portfolio first.")
+        return
+
+    
+
+    # Use 'OGC Adjusted Period Change' as returns
+    if 'OGC Adjusted Period Change' in combined_data.columns:
+        returns = combined_data['OGC Adjusted Period Change'].dropna()
+    else:
+        st.error("No 'OGC Adjusted Period Change' column found in portfolio data.")
+        return
+
+    start_value = st.number_input("Start Value", value=100000)
+    n_years = st.number_input("Years", min_value=1, max_value=50, value=10)
+    n_simulations = st.number_input("Simulations", min_value=10, max_value=10000, value=100)
+
+    if st.button("Run Monte Carlo Simulation"):
+        simulations = monte_carlo_simulation(returns, start_value, n_years, n_simulations)
+        # Generate a date range starting from the last date in combined_data
+        if 'date' in combined_data.columns:
+            last_date = pd.to_datetime(combined_data['date'].iloc[-1])
+        else:
+            last_date = pd.to_datetime('today')
+
+        dates = pd.date_range(start=last_date + pd.Timedelta(days=1), periods=simulations.shape[0], freq='M')
+        simulations_df = pd.DataFrame(simulations)
+        simulations_df['Date'] = dates
+        simulations_df.set_index('Date', inplace=True)
+        st.line_chart(simulations_df)
+        st.success("Simulation complete!")

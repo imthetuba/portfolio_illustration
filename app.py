@@ -15,7 +15,7 @@ from portfolio import (
 )
 from datetime import datetime
 
-from visualisation import generate_summary_report, show_weights, generate_multi_summary_report
+from visualisation import generate_summary_report, show_weights, generate_multi_summary_report, show_predictions
 
 # Prompt for username and password
 #username = st.text_input("Enter your Infront username:")
@@ -40,15 +40,19 @@ def show_stage_1():
         """
         **Instructions:**
         1. Choose a standard portfolio or create your own by selecting assets.
-        2. If you want to compare multiple portfolios, select the number and click "Compare Multiple Portfolios".
+        2. If you want to compare multiple portfolios, select the number and click "Compare Multiple Portfolios". For this, only monthly data is considered.
         3. On the next pages, select assets and set weights for each portfolio.
         4. Make sure the weights for each portfolio add up to 1.
         5. Click "Calculate Portfolio" or "Calculate & Compare" to see results. The results will be displayed in the next page.
         6. You can export the results to Excel. The plots are downloadable as transparent PNG files.
-        7. You can go back to the previous page at any time.
-        8. If you want to edit the asset/index information, click "Go to Admin".
-        9. If you want to edit the color scheme or language of the plots, change the constants in the `visualisation.py` file.
+        7. For singular portfolios, you can also see the predicted portfolio using different models (Monte Carlo, ML models etc).
+        8. You can go back to the previous page at any time.
+        9. If you want to edit the asset/index information, click "Go to Admin".
+        10. If you want to edit the color scheme or language of the plots, change the constants in the `visualisation.py` file.
         """
+    )
+    st.info(
+        "Tip: If you want to analyze a long time period (many years), or realise prediction models, choose 'Monthly' data frequency."
     )
     # Option to choose data frequency
     data_frequency = st.radio(
@@ -72,18 +76,21 @@ def show_stage_1():
             st.session_state['portfolio_file'] = "standard_equity_portfolio.csv"
             st.session_state['multiple_portfolios'] = False
             st.session_state['page'] = 2
+            st.rerun()
     with col2:
         if st.button("Interest Bearing Heavy Portfolio"):
             st.session_state['use_default'] = True
             st.session_state['portfolio_file'] = "standard_interest_portfolio.csv"
             st.session_state['multiple_portfolios'] = False
             st.session_state['page'] = 2
+            st.rerun()
     with col3:
         if st.button("Create One Custom Portfolio"):
             st.session_state['use_default'] = False
             st.session_state['portfolio_file'] = None
             st.session_state['multiple_portfolios'] = False
             st.session_state['page'] = 2
+            st.rerun()
 
     with col4:
         num = st.number_input(
@@ -97,6 +104,7 @@ def show_stage_1():
             st.session_state['portfolio_file'] = None
             st.session_state['multiple_portfolios'] = True
             st.session_state['page'] = 4
+            st.rerun()
     with col5:
         if st.button("Load 3 Portfolio Preset from CSV"):
             df = pd.read_csv("preset_3portfolios.csv")
@@ -105,10 +113,12 @@ def show_stage_1():
             st.session_state['portfolio_file'] = None
             st.session_state['multiple_portfolios'] = True
             st.session_state['page'] = 4
+            st.rerun()
 
     st.markdown("---")
     if st.button("Go to Admin"):
         st.session_state['page'] = 99
+        st.rerun()
 
 def show_stage_2():
     st.title("Portfolio Selection & Adjustment")
@@ -185,6 +195,11 @@ def show_stage_2():
     if st.button("Calculate Portfolio"):
 
         st.session_state['page'] = 3
+        st.rerun()
+
+    if st.button("Back"):
+        st.session_state['page'] = 1
+        st.rerun()
 
 def show_stage_3():
     st.title("Results")
@@ -202,11 +217,12 @@ def show_stage_3():
         st.warning("No portfolio selected. Please go back and select assets.")
         if st.button("Back"):
             st.session_state['page'] = 1
+            st.rerun()
         return
 
     selected_indices = list({ASSETS_INDICES_MAP[asset]["index"] for asset in selected_assets})
     combined_data = fetch_data_infront(selected_assets, selected_indices, start_date, end_date)
-    combined_data, period = clean_data(combined_data, data_frequency)
+    combined_data, period, data_frequency = clean_data(combined_data, data_frequency)
     combined_data = indexed_net_to_100(combined_data)
     combined_data = period_change(combined_data)
     combined_data = OGC_adjusted_Period_Change(combined_data, period)
@@ -221,7 +237,13 @@ def show_stage_3():
     generate_summary_report(combined_data, date_holdings_df, start_investment, allocation_limit, weights, asset_only_weights, period)
 
     if st.button("Back"):
-        st.session_state['page'] = 1
+        st.session_state['page'] = 2
+        st.rerun()
+
+    if data_frequency == "monthly":
+        if st.button("Go to Predictions"):
+            st.session_state['page'] = 6
+            st.rerun()
 
 def show_stage_4():
     num_portfolios = st.session_state.get('num_portfolios', 2)
@@ -353,9 +375,11 @@ def show_stage_4():
 
     if st.button("Calculate & Compare"):
         st.session_state['page'] = 5  # You can add a new stage for results/plotting
+        st.rerun()
 
     if st.button("Back"):
         st.session_state['page'] = 1
+        st.rerun()
 
 def show_stage_5():
     st.title("Portfolio Comparison Results")
@@ -370,6 +394,7 @@ def show_stage_5():
         st.warning("No portfolios selected. Please go back and select portfolios.")
         if st.button("Back"):
             st.session_state['page'] = 1
+            st.rerun()
         return
 
     # Dict to hold the finished portfolios
@@ -414,6 +439,19 @@ def show_stage_5():
 
     if st.button("Back"):
         st.session_state['page'] = 1
+        st.rerun()
+
+
+def show_stage_6():
+    data_frequency = st.session_state.get('data_frequency', "daily")
+
+    "Show predicted portfolio"
+    st.title("Predicted Portfolio")
+    combined_data = st.session_state.get('combined_data', None)
+    show_predictions(combined_data, data_frequency)
+    if st.button("Back"):
+        st.session_state['page'] = 3
+        st.rerun()
 
 
 def main():
@@ -430,6 +468,9 @@ def main():
         show_stage_4()
     elif st.session_state['page'] == 5:
         show_stage_5()
+    elif st.session_state['page'] == 6:
+        show_stage_6()
+
     elif st.session_state['page'] == 99:
         show_asset_indices_admin()
 

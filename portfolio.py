@@ -99,8 +99,10 @@ def clean_data(combined_data,data_frequency, is_multiple_portfolio=False):
         combined_data['month'] = combined_data['date'].dt.month
         combined_data = combined_data.sort_values('date').groupby(['Name', 'year', 'month']).tail(1)
         combined_data = combined_data.drop(columns=['year', 'month'])
+        data_frequency = "monthly"
     elif data_frequency == "monthly":
         st.info("Chosen monthly data.")
+        st.session_state['data_frequency'] = "monthly"
         period = 12
 
         # Keep only the last day of each month for each asset/index
@@ -119,7 +121,7 @@ def clean_data(combined_data,data_frequency, is_multiple_portfolio=False):
         st.info("Detected daily data.")
         period = 252
 
-    return combined_data, period
+    return combined_data, period, data_frequency
 
 def indexed_net_to_100(combined_data):
     combined_data['Period Net Return'] = combined_data.groupby('Name')['last'].transform(lambda x: (x / x.iloc[0]) - 1)
@@ -131,7 +133,6 @@ def period_change(combined_data):
     combined_data['Period Change'] = combined_data.groupby('Name')['Indexed Net Return'].transform(lambda x: x.pct_change())
     combined_data['Period Change'] = combined_data['Period Change'].fillna(0)
     return combined_data
-
 
 
 def OGC_adjusted_Period_Change(combined_data, period):
@@ -242,34 +243,18 @@ def create_portfolio(combined_data, weights, start_investment, allocation_limit)
     with st.spinner("Fixing breaches in portfolio allocation..."):
         max_iterations = 1000
         iteration = 0
+        total_breaches_fixed = 0
         while combined_data['Breach'].any():
+            breaches_this_round = combined_data['Breach'].sum()
+            total_breaches_fixed += breaches_this_round
             iteration += 1
             combined_data, date_holdings_df = reallocate_holdings_at_breach(combined_data, weights, date_holdings_df)
             combined_data = find_breach(combined_data, allocation_limit, weights)
             if iteration >= max_iterations:
                 st.warning("Reached maximum iterations while fixing breaches. There may be an issue with the breach resolution logic.")
                 break
+        st.info(f"Total breaches fixed: {total_breaches_fixed}")
             
 
     
     return combined_data, date_holdings_df
-
-    output = pd.pivot_table(
-        combined_data,
-        index='date',
-        columns='Name',
-        values='Holdings'
-    )
-
-    # Replace asset IDs with display names in columns
-    display_name_map = {asset: attrs["display name"] for asset, attrs in ASSETS_INDICES_MAP.items()}
-    output.rename(columns=display_name_map, inplace=True)
-
-    # Add total holdings per date as a new column
-    output['Total Holdings'] = output.sum(axis=1)
-
-    # Write to Excel
-    excel_buffer = pd.ExcelWriter('portfolio_output.xlsx', engine='xlsxwriter')
-    output.to_excel(excel_buffer, sheet_name='Portfolio Holdings')
-    date_holdings_df.to_excel(excel_buffer, sheet_name='Date Holdings', index=False)
-    excel_buffer.close()
