@@ -59,7 +59,7 @@ def show_stage_1():
         "Data frequency:",
         options=["Daily (most detailed)", "Monthly (less detailed)", "Yearly (least detailed)"],
         index=0,
-        help="The least detailed asset price will determine level of detail. Choose monthly or yearly if you want to override the default daily frequency.",
+        help="The least detailed asset price will determine level of detail for the whole portfolio. Choose monthly or yearly if you want to override the default daily frequency.",
     )
     if data_frequency.startswith("Daily"):
         st.session_state['data_frequency'] = "daily"
@@ -414,7 +414,7 @@ def show_stage_5():
 
         selected_indices = list({ASSETS_INDICES_MAP[asset]["index"] for asset in selected_assets})
         combined_data = fetch_data_infront(selected_assets, selected_indices, start_date, end_date)
-        combined_data, period = clean_data(combined_data, data_frequency, True)
+        combined_data, period, data_frequency = clean_data(combined_data, data_frequency, True)
         combined_data = indexed_net_to_100(combined_data)
         combined_data = period_change(combined_data)
         combined_data = OGC_adjusted_Period_Change(combined_data, period)
