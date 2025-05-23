@@ -71,12 +71,13 @@ def show_stage_1():
             st.session_state['page'] = 2
 
     with col4:
-        st.write("Right now only 2 portfolios can be compared at a time. This will be changed in the future. (Hopefully)")
-        num_portfolios = st.number_input(
+        num = st.number_input(
             "How many portfolios do you want to compare?",
-            min_value=2, max_value=2, value=2, key="num_portfolios"
+            min_value=2, max_value=4, value=2, key="None"
         )
+        
         if st.button("Compare Multiple Portfolios"):
+            st.session_state['num_portfolios'] = num
             st.session_state['use_default'] = False
             st.session_state['portfolio_file'] = None
             st.session_state['multiple_portfolios'] = True
@@ -200,8 +201,8 @@ def show_stage_3():
         st.session_state['page'] = 1
 
 def show_stage_4():
-    st.title("Compare Multiple Portfolios")
     num_portfolios = st.session_state.get('num_portfolios', 2)
+    st.title("Compare Multiple Portfolios")
     categories, display_name_to_asset_id = get_categorized_assets(ASSETS_INDICES_MAP)
 
     # Initialize session state for multi_portfolios if not already
