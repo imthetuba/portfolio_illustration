@@ -10,7 +10,9 @@ import plotly.io as pio
 # default colors
 
 pio.templates["my_custom"] = pio.templates["simple_white"]
-pio.templates["my_custom"].layout.colorway = ["#636EFA", "#EF553B", "#00CC96", "#AB63FA"]
+pio.templates["my_custom"].layout.colorway = [ "#1ABC9C", "#6A3A9C", "#F06B4B", "#F5B700", "#9BB1FF", "#292E1E", "#F0C808", "#CAA8F5", "#735F3D"]
+pio.templates["my_custom"].layout.paper_bgcolor = "rgba(0,0,0,0)" 
+pio.templates["my_custom"].layout.plot_bgcolor = "rgba(0,0,0,0)"
 pio.templates.default = "my_custom"
 
 from portfolio import ASSETS_INDICES_MAP
@@ -47,6 +49,7 @@ def plot_holdings(combined_data):
         yaxis_title='Holdings',
         legend_title='Assets and Indices'
     )
+    fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
 
     return fig
 
@@ -68,6 +71,7 @@ def plot_date_vs_total_holdings(date_holdings_df):
         yaxis_title='Total Holdings',
         legend_title='Type'
     )
+    fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
 
     return fig
 
@@ -107,9 +111,9 @@ def plot_all_holdings(combined_data):
         fig.update_layout(
             xaxis_title='Date',
             yaxis_title='Holdings',
-            legend_title='Type',
-            template='plotly_white'
+            legend_title='Type'
         )
+        fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
 
         plots[asset] = fig
 
@@ -179,6 +183,7 @@ def plot_drawdowns(portfolio_data, index_data, window=500):
         yaxis_title='Drawdown',
         legend_title='Type'
     )
+    fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
 
     return fig
 
@@ -264,9 +269,10 @@ def plot_multi_portfolio_total_holdings_assets(finished_portfolios):
         title="Total Holdings in Assets Over Time (All Portfolios)",
         xaxis_title='Date',
         yaxis_title='Total Holdings',
-        legend_title='Portfolio',
-        template='plotly_white'
+        legend_title='Portfolio'
     )
+    fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+
     return fig
 
 def plot_multi_portfolio_total_holdings_indices(finished_portfolios):
@@ -288,9 +294,9 @@ def plot_multi_portfolio_total_holdings_indices(finished_portfolios):
         title="Total Holdings in Indices Over Time (All Portfolios)",
         xaxis_title='Date',
         yaxis_title='Total Holdings',
-        legend_title='Portfolio',
-        template='plotly_white'
+        legend_title='Portfolio'
     )
+    fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
     return fig
 
 def plot_multi_portfolio_drawdowns_assets(finished_portfolios):
@@ -313,9 +319,9 @@ def plot_multi_portfolio_drawdowns_assets(finished_portfolios):
         title="Drawdowns in Assets (All Portfolios)",
         xaxis_title="Date",
         yaxis_title="Drawdown",
-        legend_title="Portfolio",
-        template="plotly_white"
+        legend_title="Portfolio"
     )
+    fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
     return fig
 
 def plot_multi_portfolio_drawdowns_indices(finished_portfolios):
@@ -338,9 +344,9 @@ def plot_multi_portfolio_drawdowns_indices(finished_portfolios):
         title="Drawdowns in Indices (All Portfolios)",
         xaxis_title="Date",
         yaxis_title="Drawdown",
-        legend_title="Portfolio",
-        template="plotly_white"
+        legend_title="Portfolio"
     )
+    fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
     return fig
 
 def generate_summary_report(combined_data, date_holdings_df, start_investment, allocation_limit, weights, asset_weights, period):
