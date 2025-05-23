@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 from InfrontConnect import infront
 from admin import show_asset_indices_admin
 from portfolio import (
@@ -64,7 +65,7 @@ def show_stage_1():
         st.session_state['data_frequency'] = "yearly"
 
 
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3, col4, col5= st.columns(5)
     with col1:
         if st.button("Equity Heavy Portfolio"):
             st.session_state['use_default'] = True
@@ -93,6 +94,14 @@ def show_stage_1():
         if st.button("Compare Multiple Portfolios"):
             st.session_state['num_portfolios'] = num
             st.session_state['use_default'] = False
+            st.session_state['portfolio_file'] = None
+            st.session_state['multiple_portfolios'] = True
+            st.session_state['page'] = 4
+    with col5:
+        if st.button("Load 3 Portfolio Preset from CSV"):
+            df = pd.read_csv("preset_3portfolios.csv")
+            st.session_state['num_portfolios'] = 3
+            st.session_state['use_default'] = True
             st.session_state['portfolio_file'] = None
             st.session_state['multiple_portfolios'] = True
             st.session_state['page'] = 4
@@ -218,6 +227,30 @@ def show_stage_4():
     num_portfolios = st.session_state.get('num_portfolios', 2)
     st.title("Compare Multiple Portfolios")
     categories, display_name_to_asset_id = get_categorized_assets(ASSETS_INDICES_MAP)
+    use_default = st.session_state.get('use_default', False)
+    if use_default:
+        df = pd.read_csv("preset_3portfolios.csv")
+        # Ensure 'multi_portfolios' is initialized
+        if 'multi_portfolios' not in st.session_state or len(st.session_state['multi_portfolios']) != 3:
+            st.session_state['multi_portfolios'] = [
+                {'selected_shares': [], 'selected_alternative': [], 'selected_interest_bearing': [], 'weights': {}, 'asset_only_weights': {}, 'selected_assets': []}
+                for _ in range(3)
+            ]
+        for i in range(3):
+            pf = df[df['portfolio'] == i+1]
+            # Only include display names that exist in the categories
+            shares = [name for name in pf[pf['category'] == "Equity"]['display_name'] if name in categories["Equity"]]
+            alt = [name for name in pf[pf['category'] == "Alternative"]['display_name'] if name in categories["Alternative"]]
+            intb = [name for name in pf[pf['category'] == "Interest Bearing"]['display_name'] if name in categories["Interest Bearing"]]
+            assets = pf['asset_id'].tolist()
+            weights = dict(zip(pf['asset_id'], pf['weight']))
+            asset_only_weights = dict(zip(pf['asset_id'], pf['weight']))
+            st.session_state['multi_portfolios'][i]['selected_shares'] = shares
+            st.session_state['multi_portfolios'][i]['selected_alternative'] = alt
+            st.session_state['multi_portfolios'][i]['selected_interest_bearing'] = intb
+            st.session_state['multi_portfolios'][i]['selected_assets'] = assets
+            st.session_state['multi_portfolios'][i]['weights'] = weights
+            st.session_state['multi_portfolios'][i]['asset_only_weights'] = asset_only_weights
 
     # Initialize session state for multi_portfolios if not already
         # Initialize session state for multi_portfolios if not already

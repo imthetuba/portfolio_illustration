@@ -1,0 +1,13 @@
+portfolio,display_name,asset_id,category,weight
+1,Storebrand Global All Countries A SEK,SSF:62022,Equity,0.30
+1,Storebrand Sverige A SE,SSF:61535,Equity,0.35
+1,SEB Företagsobligatlonsfond A,SSF:71452,Interest Bearing,0.2
+1,SEB Kortrantefond SEK A,SSF:61705,Interest Bearing,0.15
+2,Storebrand Global All Countries A SEK,SSF:62022,Equity,0.30
+2,Storebrand Sverige A SE,SSF:61535,Equity,0.45
+2,SEB Företagsobligatlonsfond A,SSF:71452,Interest Bearing,0.12
+2,SEB Kortrantefond SEK A,SSF:61705,Interest Bearing,0.10
+3,Storebrand Global All Countries A SEK,SSF:62022,Equity,0.25
+3,Storebrand Sverige A SE,SSF:61535,Equity,0.30
+3,SEB Företagsobligatlonsfond A,SSF:71452,Interest Bearing,0.25
+3,SEB Kortrantefond SEK A,SSF:61705,Interest Bearing,0.20

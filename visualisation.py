@@ -385,7 +385,8 @@ def generate_summary_report(combined_data, date_holdings_df, start_investment, a
 
     st.write("This report provides a summary of the portfolio's performance, including key metrics, asset weights, and visualizations.")
     st.write("The portfolio returns are adjusted for ongoing charges (OGC) and the allocation limit is set to " + str(allocation_limit) + "%.")
-    st.write("The portfolio is rebalanced when allocation breaches the allocation limit for any position.")
+    st.write("The portfolio is rebalanced when allocation breaches the allocation limit for any position. This means that all the overflow of assets (or index holdings if the breach is in the index) are sold and the proceeds are used to buy the other assets in the portfolio such that they amount to the normal \% holdings specified.")
+
 
     st.subheader("Key Metrics")
     st.write("This section provides key metrics for the portfolio. Variance and Sharpe Ratio are calculated based on the portfolio returns after ongoing charge (OGC).")
@@ -479,9 +480,9 @@ def generate_multi_summary_report(finished_portfolios, allocation_limit):
     """
     st.header("Multi-Portfolio Comparison")
 
-    st.write("This report provides a summary of the portfolio's performance, including key metrics, asset weights, and visualizations.")
-    st.write("The portfolio returns are adjusted for ongoing charges (OGC) and the allocation limit is set to " + str(allocation_limit) + "%.")
-    st.write("The portfolio is rebalanced when allocation breaches the allocation limit for any position.")
+    st.write("This report provides a summary of the portfolios performances, including key metrics, asset weights, and visualizations.")
+    st.write("The portfolios returns are adjusted for ongoing charges (OGC) and the allocation limit is set to " + str(allocation_limit) + "%.")
+    st.write("The portfolios is rebalanced when allocation breaches the allocation limit for any position. This means that all the overflow of assets (or index holdings if the breach is in the index) are sold and the proceeds are used to buy the other assets in the portfolios such that they amount to the normal \% holdings specified.")
 
     # Show a table of key metrics for each portfolio
     metrics_list = []
@@ -491,7 +492,6 @@ def generate_multi_summary_report(finished_portfolios, allocation_limit):
         returns = df['Total Holdings'].pct_change().dropna()
         sharpe = calculate_sharpe_ratio(returns, period)
         max_dd = calculate_maximum_drawdown(returns)
-        volatility = calculate_volatility(returns, period)
         variance = calculate_variance(returns)
         ann_return = calculate_annualized_return(returns, period)
 
@@ -499,7 +499,6 @@ def generate_multi_summary_report(finished_portfolios, allocation_limit):
             "Portfolio": name,
             "Sharpe Ratio": f"{sharpe:.2f}",
             "Variance": f"{variance:.2%}",
-            "Standard deviation": f"{volatility:.2%}",
             "Max Drawdown": f"{max_dd:.2%}",
             "Annualized Return": f"{ann_return:.2%}"
         })
