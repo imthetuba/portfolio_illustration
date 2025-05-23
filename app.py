@@ -196,7 +196,7 @@ def show_stage_2():
 
         st.session_state['page'] = 3
         st.rerun()
-
+    st.markdown("---")
     if st.button("Back"):
         st.session_state['page'] = 1
         st.rerun()
@@ -235,15 +235,15 @@ def show_stage_3():
     
     # Generate summary report
     generate_summary_report(combined_data, date_holdings_df, start_investment, allocation_limit, weights, asset_only_weights, period)
-
-    if st.button("Back"):
-        st.session_state['page'] = 2
-        st.rerun()
-
+    
     if data_frequency == "monthly":
         if st.button("Go to Predictions"):
             st.session_state['page'] = 6
             st.rerun()
+    st.markdown("---")
+    if st.button("Back"):
+        st.session_state['page'] = 2
+        st.rerun()
 
 def show_stage_4():
     num_portfolios = st.session_state.get('num_portfolios', 2)
@@ -377,6 +377,7 @@ def show_stage_4():
         st.session_state['page'] = 5  # You can add a new stage for results/plotting
         st.rerun()
 
+    st.markdown("---")
     if st.button("Back"):
         st.session_state['page'] = 1
         st.rerun()
@@ -436,7 +437,7 @@ def show_stage_5():
 
     # Generate multi-portfolio summary report
     generate_multi_summary_report(finished_portfolios, allocation_limit)
-
+    st.markdown("---")
     if st.button("Back"):
         st.session_state['page'] = 1
         st.rerun()
@@ -449,6 +450,7 @@ def show_stage_6():
     st.title("Predicted Portfolio")
     combined_data = st.session_state.get('combined_data', None)
     show_predictions(combined_data, data_frequency)
+    st.markdown("---")
     if st.button("Back"):
         st.session_state['page'] = 3
         st.rerun()
