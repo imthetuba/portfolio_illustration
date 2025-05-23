@@ -6,9 +6,36 @@ import plotly.graph_objects as go
 import plotly.express as px
 import plotly.io as pio
 
+# TOTAL_HOLDINGS = 'Totalt innehav'
+TOTAL_HOLDINGS = 'Total Holdings'
+# DATE = 'Datum'
+DATE = 'Date'
+# PORTFOLIO = 'Portfölj'
+PORTFOLIO = 'Portfolio'
+# ALLOCATION_WEIGHTS = 'Allokeringsvikter'
+ALLOCATION_WEIGHTS = 'Allocation Weights'
+# DATE_VS_TOTAL_HOLDINGS = 'Datum vs Totalt Innehav'
+DATE_VS_TOTAL_HOLDINGS = 'Date vs Total Holdings'
+# DRAWDOWN = 'Nedgång'
+DRAWDOWN = 'Drawdown'
+# HOLDINGS_IN_ASSETS_VS_INDICES = 'Innehav i tillgångar vs index'
+HOLDINGS_IN_ASSETS_VS_INDICES = 'Holdings in Assets vs Indices'
+# HOLDINGS = 'Innehav'
+HOLDINGS = 'Holdings'
+# ASSETS_AND_INDICES = 'Tillgångar och Index'
+ASSETS_AND_INDICES = 'Assets and Indices'
+# TYPE = 'Typ'
+TYPE = 'Type'
+# TOTAL_HOLDINGS_IN_ASSETS_OVER_TIME = 'Totalt innehav i tillgångar över tid (alla portföljer)'
+TOTAL_HOLDINGS_IN_ASSETS_OVER_TIME = 'Total Holdings in Assets Over Time (All Portfolios)'
+# TOTAL_HOLDINGS_IN_INDICES_OVER_TIME_ALL_PORTFOLIOS = 'Totalt innehav i index över tid (alla portföljer)'
+TOTAL_HOLDINGS_IN_INDICES_OVER_TIME_ALL_PORTFOLIOS = 'Total Holdings in Indices Over Time (All Portfolios)'
+# DRAWDOWNS_IN_ASSETS_ALL_PORTFOLIOS = 'Nedgångar i tillgångar (alla portföljer)'
+DRAWDOWNS_IN_ASSETS_ALL_PORTFOLIOS = 'Drawdowns in Assets (All Portfolios)'
+# DRAWDOWN_PORTFOLIO_VS_INDEX = 'Nedgång portfölj vs index'
+DRAWDOWN_PORTFOLIO_VS_INDEX = 'Drawdown Portfolio vs Index'
 
 # default colors
-
 pio.templates["my_custom"] = pio.templates["simple_white"]
 pio.templates["my_custom"].layout.colorway = [ "#1ABC9C", "#6A3A9C", "#F06B4B", "#F5B700", "#9BB1FF", "#292E1E", "#F0C808", "#CAA8F5", "#735F3D"]
 pio.templates["my_custom"].layout.paper_bgcolor = "rgba(0,0,0,0)" 
@@ -45,9 +72,9 @@ def plot_holdings(combined_data):
 
     # Update layout for better visualization
     fig.update_layout(
-        xaxis_title='Date',
-        yaxis_title='Holdings',
-        legend_title='Assets and Indices'
+        xaxis_title=DATE,
+        yaxis_title=HOLDINGS,
+        legend_title=ASSETS_AND_INDICES
     )
     fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
 
@@ -67,9 +94,9 @@ def plot_date_vs_total_holdings(date_holdings_df):
 
     # Update layout for better visualization
     fig.update_layout(
-        xaxis_title='Date',
-        yaxis_title='Total Holdings',
-        legend_title='Type'
+        xaxis_title=DATE,
+        yaxis_title=TOTAL_HOLDINGS,
+        legend_title=TYPE
     )
     fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
 
@@ -109,9 +136,9 @@ def plot_all_holdings(combined_data):
             fig.add_scatter(x=index_data['date'], y=index_data['Holdings'], mode='lines', name=index)
 
         fig.update_layout(
-            xaxis_title='Date',
-            yaxis_title='Holdings',
-            legend_title='Type'
+            xaxis_title=DATE,
+            yaxis_title=HOLDINGS,
+            legend_title=TYPE
         )
         fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
 
@@ -175,13 +202,13 @@ def plot_drawdowns(portfolio_data, index_data, window=500):
     drawdown_data = drawdown_data.dropna(subset=['Date'])
 
     # Create the plot
-    fig = px.line(drawdown_data, x='Date', y='Drawdown', color='Type', title='Drawdowns: Portfolio vs Index')
+    fig = px.line(drawdown_data, x='Date', y='Drawdown', color='Type', title=DRAWDOWN_PORTFOLIO_VS_INDEX)
 
     # Update layout for better visualization
     fig.update_layout(
-        xaxis_title='Date',
-        yaxis_title='Drawdown',
-        legend_title='Type'
+        xaxis_title=DATE,
+        yaxis_title=DRAWDOWN,
+        legend_title=TYPE
     )
     fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
 
@@ -266,10 +293,10 @@ def plot_multi_portfolio_total_holdings_assets(finished_portfolios):
             name=name
         ))
     fig.update_layout(
-        title="Total Holdings in Assets Over Time (All Portfolios)",
-        xaxis_title='Date',
-        yaxis_title='Total Holdings',
-        legend_title='Portfolio'
+        title=TOTAL_HOLDINGS_IN_ASSETS_OVER_TIME,
+        xaxis_title=DATE,
+        yaxis_title=TOTAL_HOLDINGS,
+        legend_title=PORTFOLIO
     )
     fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
 
@@ -291,10 +318,10 @@ def plot_multi_portfolio_total_holdings_indices(finished_portfolios):
             name=name
         ))
     fig.update_layout(
-        title="Total Holdings in Indices Over Time (All Portfolios)",
-        xaxis_title='Date',
-        yaxis_title='Total Holdings',
-        legend_title='Portfolio'
+        title=TOTAL_HOLDINGS_IN_INDICES_OVER_TIME_ALL_PORTFOLIOS,
+        xaxis_title=DATE,
+        yaxis_title=TOTAL_HOLDINGS,
+        legend_title=PORTFOLIO
     )
     fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
     return fig
@@ -316,10 +343,10 @@ def plot_multi_portfolio_drawdowns_assets(finished_portfolios):
                 name=name
             ))
     fig.update_layout(
-        title="Drawdowns in Assets (All Portfolios)",
-        xaxis_title="Date",
-        yaxis_title="Drawdown",
-        legend_title="Portfolio"
+        title=DRAWDOWNS_IN_ASSETS_ALL_PORTFOLIOS,
+        xaxis_title=DATE,
+        yaxis_title=DRAWDOWN,
+        legend_title=PORTFOLIO
     )
     fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
     return fig

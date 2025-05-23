@@ -34,7 +34,21 @@ infront.InfrontConnect(user="David.Lundberg.ipt", password="Infront2022!")
 def show_stage_1():
     st.title("Portfolio Setup")
     st.write("Choose a standard portfolio or create your own:")
-
+    # Instruction box
+    st.info(
+        """
+        **Instructions:**
+        1. Choose a standard portfolio or create your own by selecting assets.
+        2. If you want to compare multiple portfolios, select the number and click "Compare Multiple Portfolios".
+        3. On the next pages, select assets and set weights for each portfolio.
+        4. Make sure the weights for each portfolio add up to 1.
+        5. Click "Calculate Portfolio" or "Calculate & Compare" to see results. The results will be displayed in the next page.
+        6. You can export the results to Excel. The plots are downloadable as transparent PNG files.
+        7. You can go back to the previous page at any time.
+        8. If you want to edit the asset/index information, click "Go to Admin".
+        9. If you want to edit the color scheme or language of the plots, change the constants in the `visualisation.py` file.
+        """
+    )
     # Option to choose data frequency
     data_frequency = st.radio(
         "Data frequency:",
