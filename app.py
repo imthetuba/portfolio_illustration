@@ -377,7 +377,7 @@ def show_stage_5():
         #generate_summary_report(combined_data, date_holdings_df, start_investment, allocation_limit, weights, asset_only_weights, period)
 
     # Generate multi-portfolio summary report
-    generate_multi_summary_report(finished_portfolios)
+    generate_multi_summary_report(finished_portfolios, allocation_limit)
 
     if st.button("Back"):
         st.session_state['page'] = 1

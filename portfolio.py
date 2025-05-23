@@ -170,10 +170,11 @@ def reallocate_holdings_at_breach(combined_data, weights, date_holdings_df):
                 (date_holdings_df['Date'] == breach_date), 
                 'Total Holdings'
             ].values[0]
-            affected_names = combined_data[mask]['Name'].unique()
-            for name in affected_names:
-                idx = combined_data[(combined_data['Name'] == name) & (combined_data['date'] == breach_date)].index
-                combined_data.loc[idx, 'Holdings'] = weights[name] * total_holdings
+            # Rebalance ALL assets of this type at this date
+        all_names = combined_data[(combined_data['date'] == breach_date) & (combined_data['Type'] == breach_type)]['Name'].unique()
+        for name in all_names:
+            idx = combined_data[(combined_data['Name'] == name) & (combined_data['date'] == breach_date)].index
+            combined_data.loc[idx, 'Holdings'] = weights[name] * total_holdings
 
     # Recalculate holdings forward from each breach date for affected names
     def recalc_holdings(group):

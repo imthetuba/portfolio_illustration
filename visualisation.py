@@ -383,6 +383,10 @@ def generate_summary_report(combined_data, date_holdings_df, start_investment, a
     """
     st.header("Summary Report")
 
+    st.write("This report provides a summary of the portfolio's performance, including key metrics, asset weights, and visualizations.")
+    st.write("The portfolio returns are adjusted for ongoing charges (OGC) and the allocation limit is set to " + str(allocation_limit) + "%.")
+    st.write("The portfolio is rebalanced when allocation breaches the allocation limit for any position.")
+
     st.subheader("Key Metrics")
     st.write("This section provides key metrics for the portfolio. Variance and Sharpe Ratio are calculated based on the portfolio returns after ongoing charge (OGC).")
     st.write("The Sharpe Ratio is a measure of risk-adjusted return, while variance indicates the volatility of the portfolio.")
@@ -468,12 +472,16 @@ def generate_summary_report(combined_data, date_holdings_df, start_investment, a
         export_report_to_excel(combined_data, date_holdings_df, start_investment, allocation_limit, weights, sharpe_ratio)
 
 
-def generate_multi_summary_report(finished_portfolios):
+def generate_multi_summary_report(finished_portfolios, allocation_limit):
     """
     Display a summary report comparing multiple portfolios.
     finished_portfolios: dict of {portfolio_name: {combined_data, date_holdings_df, weights, asset_only_weights, period}}
     """
     st.header("Multi-Portfolio Comparison")
+
+    st.write("This report provides a summary of the portfolio's performance, including key metrics, asset weights, and visualizations.")
+    st.write("The portfolio returns are adjusted for ongoing charges (OGC) and the allocation limit is set to " + str(allocation_limit) + "%.")
+    st.write("The portfolio is rebalanced when allocation breaches the allocation limit for any position.")
 
     # Show a table of key metrics for each portfolio
     metrics_list = []
