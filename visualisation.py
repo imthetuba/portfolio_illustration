@@ -379,6 +379,88 @@ def plot_multi_portfolio_drawdowns_indices(finished_portfolios):
     fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
     return fig
 
+def plot_rolling_average_returns_vs_index(date_holdings_df, years=None, date_col='Date'):
+    """
+    Plot rolling average of returns for the portfolio and its index.
+    """
+    df = date_holdings_df.copy()
+    df[date_col] = pd.to_datetime(df[date_col])
+    df = df.sort_values(date_col)
+
+    # Separate assets and indices
+    asset_df = df[df['Type'] == 'Asset'].set_index(date_col)
+    index_df = df[df['Type'] == 'Index'].set_index(date_col)
+
+    # Calculate period returns
+    asset_returns = asset_df['Total Holdings'].pct_change().dropna()
+    index_returns = index_df['Total Holdings'].pct_change().dropna()
+
+    # Calculate years in data
+    n_years = (asset_returns.index.max() - asset_returns.index.min()).days / 365.25
+    if years is None:
+        years = max(1, int(n_years // 5))
+    periods_per_year = int(round(len(asset_returns) / n_years)) if n_years > 0 else 1
+    window = max(1, int(years * periods_per_year))
+
+    # Rolling average
+    asset_rolling = asset_returns.rolling(window=window, min_periods=window).mean().dropna()
+    index_rolling = index_returns.rolling(window=window, min_periods=window).mean().dropna()
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=asset_rolling.index, y=asset_rolling,
+        mode='lines', name=f"Portfolio ({years}y rolling avg)"
+    ))
+    fig.add_trace(go.Scatter(
+        x=index_rolling.index, y=index_rolling,
+        mode='lines', name=f"Index ({years}y rolling avg)"
+    ))
+    fig.update_layout(
+        title="Rolling Average of Returns (Portfolio vs Index)",
+        xaxis_title='Date',
+        yaxis_title='Rolling Avg Return',
+        legend_title='Type',
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)'
+    )
+    return fig
+
+def plot_multi_portfolio_rolling_average_returns(finished_portfolios, years=None, date_col='Date'):
+    """
+    Plot rolling average of returns for multiple portfolios.
+    """
+    fig = go.Figure()
+    for name, data in finished_portfolios.items():
+        df = data["date_holdings_df"].copy()
+        df[date_col] = pd.to_datetime(df[date_col])
+        df = df.sort_values(date_col)
+        asset_df = df[df['Type'] == 'Asset'].set_index(date_col)
+        returns = asset_df['Total Holdings'].pct_change().dropna()
+
+        n_years = (returns.index.max() - returns.index.min()).days / 365.25
+        use_years = years if years is not None else max(1, int(n_years // 5))
+        periods_per_year = int(round(len(returns) / n_years)) if n_years > 0 else 1
+        window = max(1, int(use_years * periods_per_year))
+
+        rolling = returns.rolling(window=window, min_periods=window).mean().dropna()
+        fig.add_trace(go.Scatter(
+            x=rolling.index,
+            y=rolling,
+            mode='lines',
+            name=f"{name} ({use_years}y avg)"
+        ))
+
+    fig.update_layout(
+        title="Rolling Average of Returns (All Portfolios)",
+        xaxis_title='Date',
+        yaxis_title='Rolling Avg Return',
+        legend_title='Portfolio',
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)'
+    )
+    return fig
+
+
 def generate_summary_report(combined_data, date_holdings_df, start_investment, allocation_limit, weights, asset_weights, period):
 
     """
@@ -409,7 +491,7 @@ def generate_summary_report(combined_data, date_holdings_df, start_investment, a
             "Sharpe Ratio",
             "Variance",
             "Max Drawdown",
-            "Volatility",
+            "Standard Deviation (Volatility)",
             "Annualized Return"
         ],
         "Value": [
@@ -450,6 +532,12 @@ def generate_summary_report(combined_data, date_holdings_df, start_investment, a
     st.subheader("Total Holdings Over Time")
     fig_total_holdings = plot_date_vs_total_holdings(date_holdings_df)
     st.plotly_chart(fig_total_holdings)
+
+    # Plot rolling average
+    st.subheader("Rolling Average of Returns (Portfolio vs Index)")
+    fig_rolling = plot_rolling_average_returns_vs_index(date_holdings_df)
+    st.plotly_chart(fig_rolling)
+    
 
     # Plot the drawdowns
     st.subheader("Drawdowns")
@@ -529,7 +617,11 @@ def generate_multi_summary_report(finished_portfolios, allocation_limit):
     fig_portfolio = plot_multi_portfolio_total_holdings_assets(finished_portfolios)
     st.plotly_chart(fig_portfolio)
 
-        # Plot drawdowns for all portfolios
+    st.subheader("Rolling Average of Returns Comparison")
+    fig_rolling_multi = plot_multi_portfolio_rolling_average_returns(finished_portfolios)
+    st.plotly_chart(fig_rolling_multi)
+
+    # Plot drawdowns for all portfolios
     st.subheader("Drawdowns Comparison")
     st.write("This section shows the drawdowns for each portfolio over time.")
     st.write("The drawdown is calculated as the percentage drop from the maximum value.")

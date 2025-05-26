@@ -145,7 +145,8 @@ def show_stage_2():
         selected_shares = []
         selected_alternative = []
         selected_interest_bearing = []
-        default_weights = {}
+        default_category_weights = {}  
+        default_asset_weights = {}     
 
     col1, col2, col3 = st.columns(3)
     with col1:

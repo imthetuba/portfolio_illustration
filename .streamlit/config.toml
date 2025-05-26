@@ -1,0 +1,7 @@
+[theme]
+base = "light"                        # Sets the theme to light mode
+primaryColor = "#1E283C"              # Primary color for UI elements
+backgroundColor = "#FFFFFF"           # Main background color
+secondaryBackgroundColor = "#E5E8EC"  # Secondary background color for cards, etc.
+textColor = "#1E283C"                 # Main text color
+font = "sans serif"                   # Default font
