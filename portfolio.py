@@ -72,6 +72,24 @@ def fetch_data_infront(tickers, index_tickers, start_date, end_date):
 def clean_data(combined_data,data_frequency, is_multiple_portfolio=False):
     if 'date' not in combined_data.columns:
         combined_data = combined_data.reset_index()
+
+    # Convert to datetime if not already
+    combined_data['date'] = pd.to_datetime(combined_data['date'])
+
+
+    # Find the earliest date for each asset/index
+    earliest_dates = combined_data.groupby('Name')['date'].min()
+    limiting_asset = earliest_dates.idxmax()
+    limiting_date = earliest_dates.max()
+    # Map asset id to display name if possible
+    display_name = ASSETS_INDICES_MAP.get(limiting_asset, {}).get("display name", limiting_asset)
+    st.write(f"Limiting asset/index: **{display_name}** (earliest available date: {limiting_date.date()})")
+    # Show all earliest dates for reference, with display names
+    earliest_dates_df = earliest_dates.reset_index().rename(columns={'date': 'Earliest Date', 'Name': 'Asset ID'})
+    earliest_dates_df['Display Name'] = earliest_dates_df['Asset ID'].map(lambda aid: ASSETS_INDICES_MAP.get(aid, {}).get("display name", aid))
+
+
+
     common_dates = combined_data.groupby('Name')['date'].apply(set).agg(lambda x: set.intersection(*x))
     common_dates = pd.DataFrame(list(common_dates), columns=['date'])
     combined_data = combined_data[combined_data['date'].isin(common_dates['date'])]
