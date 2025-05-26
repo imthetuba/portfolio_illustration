@@ -71,14 +71,14 @@ def show_stage_1():
 
     col1, col2, col3, col4, col5= st.columns(5)
     with col1:
-        if st.button("Equity Heavy Portfolio"):
+        if st.button("Agressive Portfolio"):
             st.session_state['use_default'] = True
             st.session_state['portfolio_file'] = "standard_equity_portfolio.csv"
             st.session_state['multiple_portfolios'] = False
             st.session_state['page'] = 2
             st.rerun()
     with col2:
-        if st.button("Interest Bearing Heavy Portfolio"):
+        if st.button("Conservative Portfolio"):
             st.session_state['use_default'] = True
             st.session_state['portfolio_file'] = "standard_interest_portfolio.csv"
             st.session_state['multiple_portfolios'] = False
@@ -127,11 +127,20 @@ def show_stage_2():
     if st.session_state.get('use_default', False) and st.session_state.get('portfolio_file'):
         import pandas as pd
         df = pd.read_csv(st.session_state['portfolio_file'])
-        default_assets = [a for a in df['asset']]
-        default_weights = dict(zip(df['asset'], df['weight']))
-        selected_shares = [ASSETS_INDICES_MAP[a]["display name"] for a in default_assets if ASSETS_INDICES_MAP[a]["category"] == "Equity"]
-        selected_alternative = [ASSETS_INDICES_MAP[a]["display name"] for a in default_assets if ASSETS_INDICES_MAP[a]["category"] == "Alternative"]
-        selected_interest_bearing = [ASSETS_INDICES_MAP[a]["display name"] for a in default_assets if ASSETS_INDICES_MAP[a]["category"] == "Interest Bearing"]
+        pf1 = df[df['portfolio'] == 1]
+        # Get default category weights
+        default_category_weights = pf1.groupby('category')['category_weight'].first().to_dict()
+
+        # Get default asset weights within each category
+        default_asset_weights = {}
+        for cat in pf1['category'].unique():
+            cat_assets = pf1[pf1['category'] == cat]
+            default_asset_weights[cat] = dict(zip(cat_assets['asset_id'], cat_assets['asset_weight']))
+
+        # Get default selected assets by category (for pre-selecting in multiselects)
+        selected_shares = [row['display_name'] for _, row in pf1[pf1['category'] == "Equity"].iterrows()]
+        selected_alternative = [row['display_name'] for _, row in pf1[pf1['category'] == "Alternative"].iterrows()]
+        selected_interest_bearing = [row['display_name'] for _, row in pf1[pf1['category'] == "Interest Bearing"].iterrows()]
     else:
         selected_shares = []
         selected_alternative = []
@@ -151,15 +160,52 @@ def show_stage_2():
     st.session_state['selected_assets'] = selected_assets
 
 
+        # Group selected assets by category
+    assets_by_category = {'Equity': [], 'Interest Bearing': [], 'Alternative': []}
+    for asset in selected_assets:
+        cat = ASSETS_INDICES_MAP[asset]['category']
+        assets_by_category[cat].append(asset)
+
+   # Only show categories that have selected assets
+    selected_cats = [c for c in ['Equity', 'Interest Bearing', 'Alternative'] if assets_by_category[c]]
+
+    st.markdown("### Set Category Weights ")
+    category_weights = {}
+    for cat in selected_cats:
+        category_weights[cat] = st.number_input(
+            f"Weight for {cat}", min_value=0.0, max_value=1.0,
+            value=default_category_weights.get(cat, round(1.0/len(selected_cats), 2)) if len(selected_cats) > 0 else 0.0,
+            key=f"cat_weight_{cat}"
+        )
+    if abs(sum(category_weights.values()) - 1.0) > 0.01:
+        st.error("Category weights must sum to 1.")
+
+    # For each category, show assets and let user set weights within category
+    asset_weights = {}
+    for cat in selected_cats:
+        if assets_by_category[cat]:
+            st.markdown(f"**{cat}:**")
+            total_assets = len(assets_by_category[cat])
+            asset_weights[cat] = {}
+            for asset in assets_by_category[cat]:
+                display_name = ASSETS_INDICES_MAP[asset].get("display name", asset)
+                asset_weights[cat][asset] = st.number_input(
+                    f"Weight for {display_name} in {cat}",
+                    min_value=0.0, max_value=1.0,
+                    value=default_asset_weights.get(cat, {}).get(asset, round(1.0/total_assets, 2)) if total_assets > 0 else 0.0,
+                    key=f"{cat}_asset_weight_{asset}"
+                )
+            # Check weights sum to 1 within category
+            if abs(sum(asset_weights[cat].values()) - 1.0) > 0.01:
+                st.error(f"Weights for {cat} must sum to 1.")
+
+    # Calculate final weights
     weights = {}
     asset_only_weights = {}
-    for asset in selected_assets:
-        display_name = ASSETS_INDICES_MAP[asset].get("display name", asset)
-        default_weight = default_weights.get(asset, 0.1)
-        weight = st.number_input(f"Weight for {display_name}", min_value=0.0, max_value=1.0, value=default_weight)
-        weights[asset] = weight
-        asset_only_weights[asset] = weight
-    
+    for cat in asset_weights:
+        for asset, w in asset_weights[cat].items():
+            weights[asset] = category_weights[cat] * w
+            asset_only_weights[asset] = category_weights[cat] * w
     # Sum the weights for the indices if there are duplicates
     for asset in selected_assets:
         index = ASSETS_INDICES_MAP[asset]['index']
@@ -175,7 +221,7 @@ def show_stage_2():
 
     # Check if weights add up to 1
     if sum(weights.values()) != 2.0: # double because of the index
-        st.error("The weights must add up to 1. Please adjust the weights.")
+        st.error(f"The weights must add up to 1. Please adjust the weights. The summed weights is now {sum(weights.values())}")
 
     st.session_state['weights'] = weights
     st.session_state['asset_only_weights'] = asset_only_weights

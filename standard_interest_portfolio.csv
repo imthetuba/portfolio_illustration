@@ -1,5 +1,7 @@
-asset,weight
-SSF:61705,0.3
-SSF:62022,0.2
-SSF:71452,0.2
-HELF:EVLILLB,0.1
+portfolio,category,category_weight,display_name,asset_id,asset_weight
+1,Equity,0.2,Storebrand Global All Countries A SEK,SSF:62022,0.75
+1,Equity,0.2,Storebrand Sverige A SEK,SSF:61535,0.25
+1,Interest Bearing,0.60,SEB Företagsobligatlonsfond A,SSF:71452,0.5
+1,Interest Bearing,0.60,SEB Kortrantefond SEK A,SSF:61705,0.3
+1,Interest Bearing,0.60,Nordea Institutionella Sm IA,IFMF:FI4000439468-SEK,0.2
+1,Alternative,0.2,SCOR ILS Atropos Catb B3 SEK,IFMF:LU1646476504-SEK,1
