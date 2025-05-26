@@ -162,29 +162,28 @@ def reallocate_holdings_at_breach(combined_data, weights, date_holdings_df):
     if breach_rows.empty:
         return combined_data, date_holdings_df
 
-    # Fix all unique breach dates in this pass
-    for breach_date in sorted(breach_rows['date'].unique()):
-        for breach_type in breach_rows[breach_rows['date'] == breach_date]['Type'].unique():
-            mask = (combined_data['date'] == breach_date) & (combined_data['Type'] == breach_type)
-            total_holdings = date_holdings_df.loc[
-                (date_holdings_df['Type'] == breach_type) & 
-                (date_holdings_df['Date'] == breach_date), 
-                'Total Holdings'
-            ].values[0]
-            # Rebalance ALL assets of this type at this date
-        all_names = combined_data[(combined_data['date'] == breach_date) & (combined_data['Type'] == breach_type)]['Name'].unique()
-        for name in all_names:
-            idx = combined_data[(combined_data['Name'] == name) & (combined_data['date'] == breach_date)].index
-            combined_data.loc[idx, 'Holdings'] = weights[name] * total_holdings
+    # --- Only fix the first breach ---
+    first_breach = breach_rows.sort_values('date').iloc[0]
+    breach_date = first_breach['date']
+    breach_type = first_breach['Type']
 
-    # Recalculate holdings forward from each breach date for affected names
+    # Rebalance ALL assets of this type at this date
+    total_holdings = date_holdings_df.loc[
+        (date_holdings_df['Type'] == breach_type) &
+        (date_holdings_df['Date'] == breach_date),
+        'Total Holdings'
+    ].values[0]
+    all_names = combined_data[(combined_data['date'] == breach_date) & (combined_data['Type'] == breach_type)]['Name'].unique()
+    for name in all_names:
+        idx = combined_data[(combined_data['Name'] == name) & (combined_data['date'] == breach_date)].index
+        combined_data.loc[idx, 'Holdings'] = weights[name] * total_holdings
+
+    # Recalculate holdings forward from the breach date for all assets of this type
     def recalc_holdings(group):
         group = group.copy()
-        breach_dates = set(breach_rows[breach_rows['Name'] == group['Name'].iloc[0]]['date'])
-        for breach_date in breach_dates:
-            if breach_date in group['date'].values:
-                breach_index = group[group['date'] == breach_date].index[0]
-                group.loc[breach_index:, 'Holdings'] = group.loc[breach_index, 'Holdings'] * (1 + group.loc[breach_index:, 'OGC Adjusted Period Change']).cumprod()
+        if group['Type'].iloc[0] == breach_type and breach_date in group['date'].values:
+            breach_index = group[group['date'] == breach_date].index[0]
+            group.loc[breach_index:, 'Holdings'] = group.loc[breach_index, 'Holdings'] * (1 + group.loc[breach_index:, 'OGC Adjusted Period Change']).cumprod()
         return group
 
     combined_data = combined_data.groupby('Name').apply(recalc_holdings).reset_index(level=0, drop=True)
