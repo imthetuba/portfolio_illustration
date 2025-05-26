@@ -38,7 +38,7 @@ DRAWDOWN_PORTFOLIO_VS_INDEX = 'Drawdown Portfolio vs Index'
 
 # default colors
 pio.templates["my_custom"] = pio.templates["simple_white"]
-pio.templates["my_custom"].layout.colorway = [ "#1ABC9C", "#6A3A9C", "#F06B4B", "#F5B700", "#9BB1FF", "#292E1E", "#F0C808", "#CAA8F5", "#735F3D"]
+pio.templates["my_custom"].layout.colorway = [ "#1ABC9C", "#6A3A9C", "#F06B4B", "#F5B700", "#9BB1FF", "#292E1E", "#E6F14A ", "#CAA8F5", "#735F3D", "#285943", "#3F88C5", "#CDCACC", "#BC96E6"]
 pio.templates["my_custom"].layout.paper_bgcolor = "rgba(0,0,0,0)" 
 pio.templates["my_custom"].layout.plot_bgcolor = "rgba(0,0,0,0)"
 pio.templates.default = "my_custom"
@@ -171,6 +171,8 @@ def show_weights(weights, key=None):
         hole=0.3
     )
     fig.update_traces(textinfo='percent+label')
+    
+    fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
     st.plotly_chart(fig, key=key)
 
 def plot_drawdowns(portfolio_data, index_data, window=500):
@@ -426,11 +428,18 @@ def generate_summary_report(combined_data, date_holdings_df, start_investment, a
     st.subheader("Asset Weights")
     for asset, weight in weights.items():
         display_name = ASSETS_INDICES_MAP[asset].get("display name", asset)
-        st.write(f"{display_name}: {weight:.2f}")
+        st.write(f"{display_name}: {weight:.3f}")
 
     # Show weights pie chart
     st.subheader("Asset Allocation Weights")     
-    show_weights(asset_weights)
+    show_weights(asset_weights, key="asset_only")
+
+    # Show the index weights
+    st.subheader("Index allocation weights")
+    index_only_weights = {k: v for k, v in weights.items() if k not in asset_weights}
+    st.markdown("### Index Weights:")
+    show_weights(index_only_weights, key="index_only")
+
 
     # Plot the holdings
     st.subheader("Holdings Over Time")

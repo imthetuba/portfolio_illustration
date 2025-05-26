@@ -85,7 +85,7 @@ def show_stage_1():
             st.session_state['page'] = 2
             st.rerun()
     with col3:
-        if st.button("Create One Custom Portfolio"):
+        if st.button("Custom Portfolio"):
             st.session_state['use_default'] = False
             st.session_state['portfolio_file'] = None
             st.session_state['multiple_portfolios'] = False
@@ -93,24 +93,24 @@ def show_stage_1():
             st.rerun()
 
     with col4:
-        num = st.number_input(
-            "How many portfolios do you want to compare?",
-            min_value=2, max_value=4, value=2, key="None"
-        )
         
-        if st.button("Compare Multiple Portfolios"):
+        
+        if st.button("Multiple Custom Portfolios"):
             st.session_state['num_portfolios'] = num
             st.session_state['use_default'] = False
             st.session_state['portfolio_file'] = None
             st.session_state['multiple_portfolios'] = True
             st.session_state['page'] = 4
             st.rerun()
+        num = st.number_input(
+            "Nr of portfolios",
+            min_value=2, max_value=4, value=2, key="None"
+        )
     with col5:
-        if st.button("Load 3 Portfolio Preset from CSV"):
-            df = pd.read_csv("preset_3portfolios.csv")
+        if st.button("3 Portfolio Preset"):
             st.session_state['num_portfolios'] = 3
             st.session_state['use_default'] = True
-            st.session_state['portfolio_file'] = None
+            st.session_state['portfolio_file'] = "preset_3portfolios.csv"
             st.session_state['multiple_portfolios'] = True
             st.session_state['page'] = 4
             st.rerun()
@@ -296,89 +296,117 @@ def show_stage_4():
     st.title("Compare Multiple Portfolios")
     categories, display_name_to_asset_id = get_categorized_assets(ASSETS_INDICES_MAP)
     use_default = st.session_state.get('use_default', False)
-    if use_default:
-        df = pd.read_csv("preset_3portfolios.csv")
-        # Ensure 'multi_portfolios' is initialized
-        if 'multi_portfolios' not in st.session_state or len(st.session_state['multi_portfolios']) != 3:
-            st.session_state['multi_portfolios'] = [
-                {'selected_shares': [], 'selected_alternative': [], 'selected_interest_bearing': [], 'weights': {}, 'asset_only_weights': {}, 'selected_assets': []}
-                for _ in range(3)
-            ]
-        for i in range(3):
-            pf = df[df['portfolio'] == i+1]
-            # Only include display names that exist in the categories
-            shares = [name for name in pf[pf['category'] == "Equity"]['display_name'] if name in categories["Equity"]]
-            alt = [name for name in pf[pf['category'] == "Alternative"]['display_name'] if name in categories["Alternative"]]
-            intb = [name for name in pf[pf['category'] == "Interest Bearing"]['display_name'] if name in categories["Interest Bearing"]]
-            assets = pf['asset_id'].tolist()
-            weights = dict(zip(pf['asset_id'], pf['weight']))
-            asset_only_weights = dict(zip(pf['asset_id'], pf['weight']))
-            st.session_state['multi_portfolios'][i]['selected_shares'] = shares
-            st.session_state['multi_portfolios'][i]['selected_alternative'] = alt
-            st.session_state['multi_portfolios'][i]['selected_interest_bearing'] = intb
-            st.session_state['multi_portfolios'][i]['selected_assets'] = assets
-            st.session_state['multi_portfolios'][i]['weights'] = weights
-            st.session_state['multi_portfolios'][i]['asset_only_weights'] = asset_only_weights
+    # --- Load defaults if requested ---
+    default_category_weights_list = [{} for _ in range(num_portfolios)]
+    default_asset_weights_list = [{} for _ in range(num_portfolios)]
+    default_selected_shares = [[] for _ in range(num_portfolios)]
+    default_selected_alternative = [[] for _ in range(num_portfolios)]
+    default_selected_interest_bearing = [[] for _ in range(num_portfolios)]
 
-    # Initialize session state for multi_portfolios if not already
-        # Initialize session state for multi_portfolios if not already
-    if 'multi_portfolios' not in st.session_state:
+    if use_default and st.session_state.get('portfolio_file'):
+        df = pd.read_csv(st.session_state['portfolio_file'])
+        for i in range(num_portfolios):
+            pf = df[df['portfolio'] == i+1]
+            # Category weights
+            default_category_weights_list[i] = pf.groupby('category')['category_weight'].first().to_dict()
+            # Asset weights
+            default_asset_weights = {}
+            for cat in pf['category'].unique():
+                cat_assets = pf[pf['category'] == cat]
+                default_asset_weights[cat] = dict(zip(cat_assets['asset_id'], cat_assets['asset_weight']))
+            default_asset_weights_list[i] = default_asset_weights
+            # Selected assets by category
+            default_selected_shares[i] = [row['display_name'] for _, row in pf[pf['category'] == "Equity"].iterrows()]
+            default_selected_alternative[i] = [row['display_name'] for _, row in pf[pf['category'] == "Alternative"].iterrows()]
+            default_selected_interest_bearing[i] = [row['display_name'] for _, row in pf[pf['category'] == "Interest Bearing"].iterrows()]
+
+
+    # --- Initialize session state for multi_portfolios if not already ---
+    if 'multi_portfolios' not in st.session_state or len(st.session_state['multi_portfolios']) != num_portfolios:
         st.session_state['multi_portfolios'] = [
-            {'selected_shares': [], 'selected_alternative': [], 'selected_interest_bearing': [], 'weights': {}} 
+            {'selected_shares': [], 'selected_alternative': [], 'selected_interest_bearing': [], 'weights': {}, 'asset_only_weights': {}, 'selected_assets': []}
             for _ in range(num_portfolios)
         ]
-    else:
-        # Adjust the length without resetting existing data
-        current_len = len(st.session_state['multi_portfolios'])
-        if num_portfolios > current_len:
-            for _ in range(num_portfolios - current_len):
-                st.session_state['multi_portfolios'].append(
-                    {'selected_shares': [], 'selected_alternative': [], 'selected_interest_bearing': [], 'weights': {}}
-                )
-        elif num_portfolios < current_len:
-            st.session_state['multi_portfolios'] = st.session_state['multi_portfolios'][:num_portfolios]
 
     cols = st.columns(num_portfolios)
     for i, col in enumerate(cols):
         with col:
             st.markdown(f"### Portfolio {i+1}")
             mp = st.session_state['multi_portfolios'][i]
+
+            # Use defaults if available, else use session state
+            shares = default_selected_shares[i] if use_default and default_selected_shares[i] else mp['selected_shares']
+            alt = default_selected_alternative[i] if use_default and default_selected_alternative[i] else mp['selected_alternative']
+            intb = default_selected_interest_bearing[i] if use_default and default_selected_interest_bearing[i] else mp['selected_interest_bearing']
+
             mp['selected_shares'] = st.multiselect(
                 f"Select Equity (Portfolio {i+1})", 
                 categories["Equity"], 
-                default=mp['selected_shares'], 
+                default=shares, 
                 key=f"shares_{i}"
             )
             mp['selected_alternative'] = st.multiselect(
                 f"Select Alternative (Portfolio {i+1})", 
                 categories["Alternative"], 
-                default=mp['selected_alternative'], 
+                default=alt, 
                 key=f"alt_{i}"
             )
             mp['selected_interest_bearing'] = st.multiselect(
                 f"Select Interest Bearing (Portfolio {i+1})", 
                 categories["Interest Bearing"], 
-                default=mp['selected_interest_bearing'], 
+                default=intb, 
                 key=f"int_{i}"
             )
             selected_display_names = mp['selected_shares'] + mp['selected_alternative'] + mp['selected_interest_bearing']
-            selected_assets = sorted([display_name_to_asset_id[name] for name in selected_display_names])
+            selected_assets = [display_name_to_asset_id[name] for name in selected_display_names]
             mp['selected_assets'] = selected_assets
 
-            # Weights
-            
+            # Group selected assets by category
+            assets_by_category = {'Equity': [], 'Interest Bearing': [], 'Alternative': []}
+            for asset in selected_assets:
+                cat = ASSETS_INDICES_MAP[asset]['category']
+                assets_by_category[cat].append(asset)
+            selected_cats = [c for c in ['Equity', 'Interest Bearing', 'Alternative'] if assets_by_category[c]]
+
+            st.markdown("#### Set Category Weights")
+            category_weights = {}
+            default_cat_weights = default_category_weights_list[i]
+            for cat in selected_cats:
+                category_weights[cat] = st.number_input(
+                    f"Weight for {cat} (Portfolio {i+1})", min_value=0.0, max_value=1.0,
+                    value=default_cat_weights.get(cat, round(1.0/len(selected_cats), 2)) if len(selected_cats) > 0 else 0.0,
+                    key=f"cat_weight_{cat}_{i}"
+                )
+            if abs(sum(category_weights.values()) - 1.0) > 0.01:
+                st.error("Category weights must sum to 1.")
+
+            # For each category, show assets and let user set weights within category
+            asset_weights = {}
+            default_asset_weights = default_asset_weights_list[i]
+            for cat in selected_cats:
+                if assets_by_category[cat]:
+                    st.markdown(f"**{cat}:**")
+                    total_assets = len(assets_by_category[cat])
+                    asset_weights[cat] = {}
+                    for asset in assets_by_category[cat]:
+                        display_name = ASSETS_INDICES_MAP[asset].get("display name", asset)
+                        asset_weights[cat][asset] = st.number_input(
+                            f"Weight for {display_name} in {cat} (Portfolio {i+1})",
+                            min_value=0.0, max_value=1.0,
+                            value=default_asset_weights.get(cat, {}).get(asset, round(1.0/total_assets, 2)) if total_assets > 0 else 0.0,
+                            key=f"{cat}_asset_weight_{asset}_{i}"
+                        )
+                    # Check weights sum to 1 within category
+                    if abs(sum(asset_weights[cat].values()) - 1.0) > 0.01:
+                        st.error(f"Weights for {cat} must sum to 1.")
+
+            # Calculate final weights
             weights = {}
             asset_only_weights = {}
-            for asset in selected_assets:
-                display_name = ASSETS_INDICES_MAP[asset].get("display name", asset)
-                weight = st.number_input(
-                    f"Weight for {display_name} (Portfolio {i+1})",
-                    min_value=0.0, max_value=1.0,
-                    value=mp['weights'].get(asset, 0.1),
-                    key=f"weight_{i}_{asset}"
-                )
-                weights[asset] = weight
-                asset_only_weights[asset] = weight
+            for cat in asset_weights:
+                for asset, w in asset_weights[cat].items():
+                    weights[asset] = category_weights[cat] * w
+                    asset_only_weights[asset] = category_weights[cat] * w
             # Sum the weights for the indices if there are duplicates
             for asset in selected_assets:
                 index = ASSETS_INDICES_MAP[asset]['index']
@@ -389,12 +417,11 @@ def show_stage_4():
 
             mp['weights'] = weights
             mp['asset_only_weights'] = asset_only_weights
-            
 
-                    
             # Optional: check if weights sum to 1
             if abs(sum(asset_only_weights.values()) - 1.0) > 0.01:
-                st.error("The weights must add up to 1. Please adjust the weights.")
+                st.error("The asset weights must add up to 1. Please adjust the weights.")
+
 
             # Show weights pie chart
             show_weights(asset_only_weights, key=f"weights_chart_{i}")
