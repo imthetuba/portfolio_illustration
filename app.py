@@ -29,10 +29,45 @@ from visualisation import generate_summary_report, show_weights, generate_multi_
 # Connect to Infront API
 infront.InfrontConnect(user="David.Lundberg.ipt", password="Infront2022!") 
 
-
+def show_footer():
+    st.markdown(
+        """
+        <style>
+        a:link, a:visited {
+            color: #4da3ff;
+            background-color: transparent;
+            text-decoration: underline;
+        }
+        a:hover, a:active {
+            color: #ff4d4d;
+            background-color: transparent;
+            text-decoration: underline;
+        }
+        .footer {
+            position: fixed;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            background-color: #1E283C;
+            color: #ccc;
+            text-align: center;
+            padding: 1em 0 1em 0;
+            z-index: 100;
+        }
+        </style>
+        <div class="footer">
+            <p>
+                Evisens Portfolio Illustration Tool &copy; 2025 |
+                Contact: <a href="mailto:tuva.gunnarsson@evisens.com">tuva.gunnarsson@evisens.com</a>
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 
 def show_stage_1():
+    st.logo("logo.png")
     st.title("Portfolio Setup")
     st.write("Choose a standard portfolio or create your own:")
     # Instruction box
@@ -119,8 +154,10 @@ def show_stage_1():
     if st.button("Go to Admin"):
         st.session_state['page'] = 99
         st.rerun()
+    show_footer()
 
 def show_stage_2():
+    st.logo("logo.png")
     st.title("Portfolio Selection & Adjustment")
     categories, display_name_to_asset_id = get_categorized_assets(ASSETS_INDICES_MAP)
 
@@ -239,8 +276,12 @@ def show_stage_2():
     st.session_state['start_date'] = start_date
     st.session_state['end_date'] = end_date
 
-    use_company_ogc = st.checkbox("Use Evisens OGC (if available)", value=False)
-    st.session_state['use_company_ogc'] = use_company_ogc
+    ogc_option = st.selectbox(
+        "OGC setting",
+        options=["Standard OGC", "Evisens OGC (if available)", "No OGC"],
+        index=0
+    )
+    st.session_state['ogc_option'] = ogc_option
 
     if st.button("Calculate Portfolio"):
 
@@ -250,8 +291,10 @@ def show_stage_2():
     if st.button("Back"):
         st.session_state['page'] = 1
         st.rerun()
+    show_footer()
 
 def show_stage_3():
+    st.logo("logo.png")
     st.title("Results")
     selected_assets = st.session_state.get('selected_assets', [])
     weights = st.session_state.get('weights', {})
@@ -261,7 +304,7 @@ def show_stage_3():
     end_date = st.session_state.get('end_date', datetime.today())
     start_investment = st.session_state.get('start_investment', 100000)
     
-    use_company_ogc = st.session_state.get('use_company_ogc', False)
+    ogc_option = st.session_state.get('ogc_option', "Standard OGC")
 
     data_frequency = st.session_state.get('data_frequency', "daily")
     
@@ -277,7 +320,7 @@ def show_stage_3():
     combined_data, period, data_frequency = clean_data(combined_data, data_frequency)
     combined_data = indexed_net_to_100(combined_data)
     combined_data = period_change(combined_data)
-    combined_data = OGC_adjusted_Period_Change(combined_data, period, use_company_ogc)
+    combined_data = OGC_adjusted_Period_Change(combined_data, period, ogc_option)
     combined_data = indexed_OGC_adjusted_to_100(combined_data)
     st.session_state['combined_data'] = combined_data
 
@@ -296,8 +339,10 @@ def show_stage_3():
     if st.button("Back"):
         st.session_state['page'] = 2
         st.rerun()
+    show_footer()
 
 def show_stage_4():
+    st.logo("logo.png")
     num_portfolios = st.session_state.get('num_portfolios', 2)
     st.title("Compare Multiple Portfolios")
     categories, display_name_to_asset_id = get_categorized_assets(ASSETS_INDICES_MAP)
@@ -433,10 +478,11 @@ def show_stage_4():
             show_weights(asset_only_weights, key=f"weights_chart_{i}")
 
             # Choose to use OGC or not
-            use_company_ogc = st.checkbox(
-                f"Use Evisens OGC for Portfolio {i+1} (if available)", 
-                value=False, 
-                key=f"use_company_ogc_{i}"
+            ogc_option = st.selectbox(
+                f"OGC setting for Portfolio {i+1}",
+                options=["Standard OGC", "Evisens OGC (if available)", "No OGC (OGC = 0)"],
+                index=0,
+                key=f"ogc_option_{i}"
             )
 
 
@@ -467,8 +513,10 @@ def show_stage_4():
     if st.button("Back"):
         st.session_state['page'] = 1
         st.rerun()
+    show_footer()
 
 def show_stage_5():
+    st.logo("logo.png")
     st.title("Portfolio Comparison Results")
     portfolios = st.session_state.get('multi_portfolios', [])
     allocation_limit = st.session_state.get('allocation_limit', 50)
@@ -493,10 +541,8 @@ def show_stage_5():
         selected_assets = portfolio['selected_assets']
         weights = portfolio['weights']
         asset_only_weights = portfolio['asset_only_weights']
-        use_company_ogc = st.session_state.get(f'use_company_ogc_{i}', False)    
-        if use_company_ogc:
-            st.write(f"Using Evisens OGC for Portfolio {i+1} (if available)")
-
+        ogc_option = st.session_state.get(f'ogc_option_{i}', "Standard OGC")
+        st.write(f"OGC option for Portfolio {i+1}: {ogc_option}")
         
         if not selected_assets or not weights:
             st.warning(f"Portfolio {i+1} is incomplete. Please go back and select assets.")
@@ -507,7 +553,7 @@ def show_stage_5():
         combined_data, period, data_frequency = clean_data(combined_data, data_frequency, True)
         combined_data = indexed_net_to_100(combined_data)
         combined_data = period_change(combined_data)
-        combined_data = OGC_adjusted_Period_Change(combined_data, period, use_company_ogc)
+        combined_data = OGC_adjusted_Period_Change(combined_data, period, ogc_option)
         combined_data = indexed_OGC_adjusted_to_100(combined_data)
 
         combined_data, date_holdings_df  = create_portfolio(combined_data, weights, start_investment, allocation_limit)    
@@ -530,9 +576,11 @@ def show_stage_5():
     if st.button("Back"):
         st.session_state['page'] = 1
         st.rerun()
+    show_footer()
 
 
 def show_stage_6():
+    st.logo("logo.png")
     data_frequency = st.session_state.get('data_frequency', "daily")
 
     "Show predicted portfolio"
@@ -543,6 +591,7 @@ def show_stage_6():
     if st.button("Back"):
         st.session_state['page'] = 3
         st.rerun()
+    show_footer()
 
 
 def main():

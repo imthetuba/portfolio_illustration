@@ -6,6 +6,7 @@ import streamlit as st
 ASSET_INDICES_CSV = 'assets_indices_map.csv'
 
 def show_asset_indices_admin():
+    st.logo("logo.png")
     st.title("Edit Asset/Index Information (Admin)")
     st.warning("Warning: Changes here will permanently modify the asset_indices_map.csv file. Proceed with caution!")
 
