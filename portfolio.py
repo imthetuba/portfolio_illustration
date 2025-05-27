@@ -17,7 +17,23 @@ def load_assets_indices_map(csv_file):
         }
     return assets_indices_map
 
+
+
 ASSETS_INDICES_MAP = load_assets_indices_map('assets_indices_map.csv')
+# Load standard OGCs
+STANDARD_OGC_MAP = {row['asset']: row['OGC_ex_post'] for _, row in pd.read_csv('assets_indices_map.csv').iterrows()}
+
+# Load company OGCs (only for some assets)
+company_ogc_df = pd.read_csv('company_ogc.csv')
+COMPANY_OGC_MAP = dict(zip(company_ogc_df['asset_id'], company_ogc_df['company_ogc']))
+
+def get_ogc(asset_id, use_company_ogc=True):
+    """
+    Returns the company OGC if available and selected, otherwise the standard OGC.
+    """
+    if use_company_ogc and asset_id in COMPANY_OGC_MAP and pd.notnull(COMPANY_OGC_MAP[asset_id]):
+        return COMPANY_OGC_MAP[asset_id]
+    return STANDARD_OGC_MAP.get(asset_id, 0.0)  # fallback to 0 if not found
 
 def get_categorized_assets(assets_map):
     categories = {"Equity": [], "Alternative": [], "Interest Bearing": []}
@@ -153,12 +169,13 @@ def period_change(combined_data):
     return combined_data
 
 
-def OGC_adjusted_Period_Change(combined_data, period):
+def OGC_adjusted_Period_Change(combined_data, period, use_company_ogc=True):
     def calculate_adjusted_period_change(row):
         if row['Type'] == 'Index':
             return row['Period Change']
         else:
-            return row['Period Change'] - ASSETS_INDICES_MAP[row['Name']]["OGC ex. post"] / period
+            ogc = get_ogc(row['Name'], use_company_ogc)
+            return row['Period Change'] - ogc / period
     combined_data['OGC Adjusted Period Change'] = combined_data.apply(calculate_adjusted_period_change, axis=1)
     combined_data['OGC Adjusted Period Change'] = combined_data['OGC Adjusted Period Change'].fillna(0)
     return combined_data

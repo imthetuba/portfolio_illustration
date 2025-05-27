@@ -239,6 +239,9 @@ def show_stage_2():
     st.session_state['start_date'] = start_date
     st.session_state['end_date'] = end_date
 
+    use_company_ogc = st.checkbox("Use Evisens OGC (if available)", value=False)
+    st.session_state['use_company_ogc'] = use_company_ogc
+
     if st.button("Calculate Portfolio"):
 
         st.session_state['page'] = 3
@@ -258,6 +261,8 @@ def show_stage_3():
     end_date = st.session_state.get('end_date', datetime.today())
     start_investment = st.session_state.get('start_investment', 100000)
     
+    use_company_ogc = st.session_state.get('use_company_ogc', False)
+
     data_frequency = st.session_state.get('data_frequency', "daily")
     
     if not selected_assets or not weights:
@@ -272,7 +277,7 @@ def show_stage_3():
     combined_data, period, data_frequency = clean_data(combined_data, data_frequency)
     combined_data = indexed_net_to_100(combined_data)
     combined_data = period_change(combined_data)
-    combined_data = OGC_adjusted_Period_Change(combined_data, period)
+    combined_data = OGC_adjusted_Period_Change(combined_data, period, use_company_ogc)
     combined_data = indexed_OGC_adjusted_to_100(combined_data)
     st.session_state['combined_data'] = combined_data
 
@@ -427,6 +432,13 @@ def show_stage_4():
             # Show weights pie chart
             show_weights(asset_only_weights, key=f"weights_chart_{i}")
 
+            # Choose to use OGC or not
+            use_company_ogc = st.checkbox(
+                f"Use Evisens OGC for Portfolio {i+1} (if available)", 
+                value=False, 
+                key=f"use_company_ogc_{i}"
+            )
+
 
     #Start investment amount
     start_investment = st.number_input("Start investment amount (SEK)", min_value=0, value=100000)
@@ -480,7 +492,10 @@ def show_stage_5():
     for i, portfolio in enumerate(portfolios):
         selected_assets = portfolio['selected_assets']
         weights = portfolio['weights']
-        asset_only_weights = portfolio['asset_only_weights']    
+        asset_only_weights = portfolio['asset_only_weights']
+        use_company_ogc = st.session_state.get(f'use_company_ogc_{i}', False)    
+        if use_company_ogc:
+            st.write(f"Using Evisens OGC for Portfolio {i+1} (if available)")
 
         
         if not selected_assets or not weights:
@@ -492,7 +507,7 @@ def show_stage_5():
         combined_data, period, data_frequency = clean_data(combined_data, data_frequency, True)
         combined_data = indexed_net_to_100(combined_data)
         combined_data = period_change(combined_data)
-        combined_data = OGC_adjusted_Period_Change(combined_data, period)
+        combined_data = OGC_adjusted_Period_Change(combined_data, period, use_company_ogc)
         combined_data = indexed_OGC_adjusted_to_100(combined_data)
 
         combined_data, date_holdings_df  = create_portfolio(combined_data, weights, start_investment, allocation_limit)    
