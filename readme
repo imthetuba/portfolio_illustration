@@ -2,6 +2,9 @@
 
 **Evisens Portföljillustrationsverktyg** is an interactive Streamlit-based tool for building, adjusting, and visualizing investment portfolios. The app allows users to select assets, assign weights, set investment parameters, and compare multiple portfolios side by side with clear visualizations.
 
+
+### Quickstart by doule-clicking start_app.bat 
+
 ## Features
 
 - **Asset Selection:** Choose from equities, alternatives, and interest-bearing assets.
