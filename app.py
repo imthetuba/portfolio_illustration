@@ -94,7 +94,10 @@ def show_stage_1():
 
     with col4:
         
-        
+        num = st.number_input(
+            "Nr of portfolios",
+            min_value=2, max_value=4, value=2, key="None"
+        )
         if st.button("Multiple Custom Portfolios"):
             st.session_state['num_portfolios'] = num
             st.session_state['use_default'] = False
@@ -102,10 +105,7 @@ def show_stage_1():
             st.session_state['multiple_portfolios'] = True
             st.session_state['page'] = 4
             st.rerun()
-        num = st.number_input(
-            "Nr of portfolios",
-            min_value=2, max_value=4, value=2, key="None"
-        )
+        
     with col5:
         if st.button("3 Portfolio Preset"):
             st.session_state['num_portfolios'] = 3
