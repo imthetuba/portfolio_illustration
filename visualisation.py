@@ -478,33 +478,45 @@ def generate_summary_report(combined_data, date_holdings_df, start_investment, a
     st.write("The Sharpe Ratio is a measure of risk-adjusted return, while variance indicates the volatility of the portfolio.")
     st.write("The Sharpe Ratio is calculated using a risk-free rate of " + str(RISK_FREE_RATE) + " per year.")
     st.write("Period value " + str(period) + " is used to annualize the returns and volatility.")
-    portfolio_returns = date_holdings_df["Period Return"].dropna()
+    portfolio_returns = date_holdings_df[date_holdings_df['Type'] == 'Asset']["Period Return"].dropna()
     sharpe_ratio = calculate_sharpe_ratio(portfolio_returns, period)
     variance = calculate_variance(portfolio_returns, period)
     max_drawdown = calculate_maximum_drawdown(portfolio_returns)
-    volatility = calculate_stdev(portfolio_returns, period)
+    stdev = calculate_stdev(portfolio_returns, period)
     annualized_return = calculate_annualized_return(portfolio_returns, period)
     final_holdings = date_holdings_df[date_holdings_df['Type'] == 'Asset']['Total Holdings'].iloc[-1]
+    total_return = (final_holdings - start_investment) / start_investment
+    total_return_index = (date_holdings_df[date_holdings_df['Type'] == 'Index']['Total Holdings'].iloc[-1] - start_investment) / start_investment
+    stdev_index = calculate_stdev(date_holdings_df[date_holdings_df['Type'] == 'Index']["Period Return"].dropna(), period)
     metrics_df = pd.DataFrame({
         "Metric": [
-            "Start Investment Amount",
+            
             "Allocation Limit",
             "Sharpe Ratio",
-            "Standard Deviation (Volatility)",
+            "Standard Deviation",
+            "Standard Deviation (Index)",
             "Variance",
             "Max Drawdown",
             "Annualized Return",
-            "Final Holdings"
+            "Start Investment Amount",
+            "Final Holdings",
+            "Total Return",
+            "Total Return (Index)"
+
         ],
         "Value": [
-            f"{start_investment} SEK",
+            
             f"{allocation_limit}%",
             f"{sharpe_ratio:.2f}",
+            f"{stdev * 100:.2f}%",
+            f"{stdev_index * 100:.2f}%",
             f"{variance * 100:.2f}%",
             f"{max_drawdown * 100:.2f}%",
-            f"{volatility * 100:.2f}%",
             f"{annualized_return * 100:.2f}%",
-            f"{final_holdings:.2f} SEK"
+            f"{start_investment} SEK",
+            f"{final_holdings:.2f} SEK",
+            f"{total_return:.2%}",
+            f"{total_return_index:.2%}"
         ]
     })
     st.table(metrics_df)
@@ -590,7 +602,7 @@ def generate_multi_summary_report(finished_portfolios, allocation_limit):
     for name, data in finished_portfolios.items():
         df = data["date_holdings_df"]
         period = data["period"]
-        returns = df["Period Return"].dropna()
+        returns = df[df['Type'] == 'Asset']["Period Return"].dropna()
         sharpe = calculate_sharpe_ratio(returns, period)
         max_dd = calculate_maximum_drawdown(returns)
         variance = calculate_variance(returns, period)
