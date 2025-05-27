@@ -58,7 +58,7 @@ def show_footer():
         <div class="footer">
             <p>
                 Evisens Portfolio Illustration Tool &copy; 2025 |
-                Contact: <a href="mailto:tuva.gunnarsson@evisens.com">tuva.gunnarsson@evisens.com</a>
+                Developed with Streamlit
             </p>
         </div>
         """,

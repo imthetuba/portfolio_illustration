@@ -20,6 +20,6 @@ python -m pip install streamlit
 python -m pip install -r requirements.txt
 
 REM Run the Streamlit app
-streamlit run app.py
+python -m streamlit run app.py
 
 pause
