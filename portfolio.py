@@ -290,7 +290,10 @@ def create_portfolio(combined_data, weights, start_investment, allocation_limit)
                 st.warning("Reached maximum iterations while fixing breaches. There may be an issue with the breach resolution logic.")
                 break
         st.info(f"Total breaches fixed: {total_breaches_fixed}")
-            
+    
+    # Calculate period return for total holdings in date_holdings_df
+    date_holdings_df = date_holdings_df.sort_values(['Type', 'Date'])
+    date_holdings_df['Period Return'] = date_holdings_df.groupby('Type')['Total Holdings'].pct_change().fillna(0)
 
     
     return combined_data, date_holdings_df

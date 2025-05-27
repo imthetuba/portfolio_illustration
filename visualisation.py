@@ -227,11 +227,11 @@ def calculate_sharpe_ratio(returns,period, risk_free_rate=RISK_FREE_RATE ):
     sharpe_ratio = annualized_excess_returns / annualized_volatility
     return sharpe_ratio
 
-def calculate_variance(returns):
+def calculate_variance(returns, period):
     """
     Calculate the variance of a given series of returns.
     """
-    return np.var(returns)
+    return np.var(returns) * period
 
 def calculate_annualized_return(returns, period):
     """
@@ -249,11 +249,11 @@ def calculate_maximum_drawdown(returns):
     max_drawdown = drawdown.min()
     return max_drawdown
 
-def calculate_volatility(returns,period):
+def calculate_stdev(returns,period):
     """
-    Calculate the volatility for a given series of returns.
+    Calculate the standard deviation for a given series of returns.
     """
-    return returns.std() * np.sqrt(period)
+    return returns.std() * np.sqrt(period)   
 
 def export_report_to_excel(combined_data, date_holdings_df, start_investment, allocation_limit, weights, sharpe_ratio):
     """
@@ -478,21 +478,23 @@ def generate_summary_report(combined_data, date_holdings_df, start_investment, a
     st.write("The Sharpe Ratio is a measure of risk-adjusted return, while variance indicates the volatility of the portfolio.")
     st.write("The Sharpe Ratio is calculated using a risk-free rate of " + str(RISK_FREE_RATE) + " per year.")
     st.write("Period value " + str(period) + " is used to annualize the returns and volatility.")
-    portfolio_returns = combined_data[combined_data['Type'] == 'Asset']['OGC Adjusted Period Change']
+    portfolio_returns = date_holdings_df["Period Return"].dropna()
     sharpe_ratio = calculate_sharpe_ratio(portfolio_returns, period)
-    variance = calculate_variance(portfolio_returns)
+    variance = calculate_variance(portfolio_returns, period)
     max_drawdown = calculate_maximum_drawdown(portfolio_returns)
-    volatility = calculate_volatility(portfolio_returns, period)
+    volatility = calculate_stdev(portfolio_returns, period)
     annualized_return = calculate_annualized_return(portfolio_returns, period)
+    final_holdings = date_holdings_df[date_holdings_df['Type'] == 'Asset']['Total Holdings'].iloc[-1]
     metrics_df = pd.DataFrame({
         "Metric": [
             "Start Investment Amount",
             "Allocation Limit",
             "Sharpe Ratio",
+            "Standard Deviation (Volatility)",
             "Variance",
             "Max Drawdown",
-            "Standard Deviation (Volatility)",
-            "Annualized Return"
+            "Annualized Return",
+            "Final Holdings"
         ],
         "Value": [
             f"{start_investment} SEK",
@@ -501,7 +503,8 @@ def generate_summary_report(combined_data, date_holdings_df, start_investment, a
             f"{variance * 100:.2f}%",
             f"{max_drawdown * 100:.2f}%",
             f"{volatility * 100:.2f}%",
-            f"{annualized_return * 100:.2f}%"
+            f"{annualized_return * 100:.2f}%",
+            f"{final_holdings:.2f} SEK"
         ]
     })
     st.table(metrics_df)
@@ -587,18 +590,25 @@ def generate_multi_summary_report(finished_portfolios, allocation_limit):
     for name, data in finished_portfolios.items():
         df = data["date_holdings_df"]
         period = data["period"]
-        returns = df['Total Holdings'].pct_change().dropna()
+        returns = df["Period Return"].dropna()
         sharpe = calculate_sharpe_ratio(returns, period)
         max_dd = calculate_maximum_drawdown(returns)
-        variance = calculate_variance(returns)
+        variance = calculate_variance(returns, period)
+        standard_deviation = calculate_stdev(returns, period)
         ann_return = calculate_annualized_return(returns, period)
+        final_holdings = df['Total Holdings'].iloc[-1]
+        total_return = (final_holdings - data["start_investment"]) / data["start_investment"]
 
         metrics_list.append({
             "Portfolio": name,
             "Sharpe Ratio": f"{sharpe:.2f}",
             "Variance": f"{variance:.2%}",
+            "Standard Deviation": f"{standard_deviation:.2%}",
             "Max Drawdown": f"{max_dd:.2%}",
-            "Annualized Return": f"{ann_return:.2%}"
+            "Annualized Return": f"{ann_return:.2%}",
+            "Start Investment": f"{data['start_investment']:.2f} SEK",
+            "Final Holdings": f"{final_holdings:.2f} SEK",
+            "Total Return": f"{total_return:.2%}"
         })
     if metrics_list:
         metrics_df = pd.DataFrame(metrics_list).set_index('Portfolio')
@@ -607,7 +617,7 @@ def generate_multi_summary_report(finished_portfolios, allocation_limit):
         st.write("The Sharpe Ratio is a measure of risk-adjusted return, while variance indicates the volatility of the portfolio.")
         st.write("The Sharpe Ratio is calculated using a risk-free rate of " + str(RISK_FREE_RATE) + " per year.")
         st.write("Period value " + str(period) + " is used to annualize the returns and volatility.")
-        st.write("The table below shows the key metrics for each portfolio.")
+        st.write("The table below shows the key metrics per year for each portfolio.")
         st.table(metrics_df)
 
     # Plot all portfolios on the same chart

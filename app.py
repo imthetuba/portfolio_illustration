@@ -564,7 +564,8 @@ def show_stage_5():
             "date_holdings_df": date_holdings_df,
             "weights": weights,
             "asset_only_weights": asset_only_weights,
-            "period": period
+            "period": period,
+            "start_investment": start_investment
         }
         print("Period ", period)
         # Generate summary report for each portfolio
@@ -583,7 +584,6 @@ def show_stage_6():
     st.logo("logo.png")
     data_frequency = st.session_state.get('data_frequency', "daily")
 
-    "Show predicted portfolio"
     st.title("Predicted Portfolio")
     combined_data = st.session_state.get('combined_data', None)
     show_predictions(combined_data, data_frequency)
