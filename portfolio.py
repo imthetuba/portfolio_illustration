@@ -51,41 +51,56 @@ def get_categorized_assets(assets_map):
     return categories, display_name_to_asset_id
 
 def fetch_data_infront(tickers, index_tickers, start_date, end_date):
-    try:
-        history = infront.GetHistory(
-            tickers=tickers,
-            fields=["last"],
-            start_date=start_date.strftime('%Y-%m-%d'),
-            end_date=end_date.strftime('%Y-%m-%d')
-        )
-        data_frames = []
-        i = 0
-        for ticker, df in history.items():
-            print(f"Fetching data for {ticker}")
-            df['Type'] = 'Asset'
-            df['Name'] = tickers[i]
-            i += 1
-            data_frames.append(df)
-        index_history = infront.GetHistory(
-            tickers=index_tickers,
-            fields=["last"],
-            start_date=start_date.strftime('%Y-%m-%d'),
-            end_date=end_date.strftime('%Y-%m-%d')
-        )
-        index_data_frames = []
-        i = 0
-        for ticker, df in index_history.items():
-            print(f"Fetching data for {ticker}")
-            df['Type'] = 'Index'
-            df['Name'] = index_tickers[i]
-            i += 1
-            index_data_frames.append(df)
-        asset_data = pd.concat(data_frames)
-        index_data = pd.concat(index_data_frames)
-        combined_data = pd.concat([asset_data, index_data])
-        return combined_data
-    except Exception as e:
-        raise RuntimeError(f"Error fetching data: {e}")
+    with st.spinner("Fetching data for portfolios..."):
+        try:
+            
+            if 'cached_data' not in st.session_state:
+                st.session_state['cached_data'] = {}
+            # Cache combined data to avoid redundant fetching
+            cache_key = f"{start_date}_{end_date}_{'_'.join(tickers)}_{'_'.join(index_tickers)}"
+
+            if cache_key in st.session_state['cached_data']:
+                print(f"Using cached data for {cache_key}")
+                combined_data = st.session_state['cached_data'][cache_key]
+
+            else:
+                history = infront.GetHistory(
+                    tickers=tickers,
+                    fields=["last"],
+                    start_date=start_date.strftime('%Y-%m-%d'),
+                    end_date=end_date.strftime('%Y-%m-%d')
+                )
+                data_frames = []
+                i = 0
+                for ticker, df in history.items():
+                    print(f"Fetching data for {ticker}")
+                    df['Type'] = 'Asset'
+                    df['Name'] = tickers[i]
+                    i += 1
+                    data_frames.append(df)
+                index_history = infront.GetHistory(
+                    tickers=index_tickers,
+                    fields=["last"],
+                    start_date=start_date.strftime('%Y-%m-%d'),
+                    end_date=end_date.strftime('%Y-%m-%d')
+                )
+                index_data_frames = []
+                i = 0
+                for ticker, df in index_history.items():
+                    print(f"Fetching data for {ticker}")
+                    df['Type'] = 'Index'
+                    df['Name'] = index_tickers[i]
+                    i += 1
+                    index_data_frames.append(df)
+                asset_data = pd.concat(data_frames)
+                index_data = pd.concat(index_data_frames)
+                combined_data = pd.concat([asset_data, index_data])
+
+                st.session_state['cached_data'][cache_key] = combined_data
+
+            return combined_data
+        except Exception as e:
+            raise RuntimeError(f"Error fetching data: {e}")
 
 def clean_data(combined_data,data_frequency, is_multiple_portfolio=False):
     if 'date' not in combined_data.columns:
