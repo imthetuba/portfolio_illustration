@@ -18,16 +18,14 @@ from datetime import datetime
 from visualisation import generate_summary_report, show_weights, generate_multi_summary_report, show_predictions
 
 # Prompt for username and password
-#username = st.text_input("Enter your Infront username:")
-#password = st.text_input("Enter your Infront password:", type="password")
+username = st.text_input("Enter your Infront username:")
+password = st.text_input("Enter your Infront password:", type="password")
 
 
-#if username and password:
-#    infront.InfrontConnect(user=username, password=password)  # Use the provided credentials
-#else:
-#    st.warning("Please enter your Infront username and password to continue.")
-# Connect to Infront API
-infront.InfrontConnect(user="David.Lundberg.ipt", password="Infront2022!") 
+if username and password:
+   infront.InfrontConnect(user=username, password=password)  # Use the provided credentials
+else:
+   st.warning("Please enter your Infront username and password to continue.")
 
 def show_footer():
     st.markdown(
