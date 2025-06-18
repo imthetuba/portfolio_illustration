@@ -74,16 +74,21 @@ def show_stage_1():
     st.info(
         """
         **Instructions:**
-        1. Choose a standard portfolio or create your own by selecting assets.
-        2. If you want to compare multiple portfolios, select the number and click "Compare Multiple Portfolios". For this, only monthly data is considered.
-        3. On the next pages, select assets and set weights for each portfolio.
-        4. Make sure the weights for each portfolio add up to 1.
-        5. Click "Calculate Portfolio" or "Calculate & Compare" to see results. The results will be displayed in the next page.
-        6. You can export the results to Excel. The plots are downloadable as transparent PNG files.
-        7. For singular portfolios, you can also see the predicted portfolio using different models (Monte Carlo, ML models etc).
-        8. You can go back to the previous page at any time.
-        9. If you want to edit the asset/index information, click "Go to Admin".
-        10. If you want to edit the color scheme or language of the plots, change the constants in the `visualisation.py` file.
+
+            Select a standard portfolio or create your own by choosing assets.
+
+            To compare multiple portfolios, choose the count and click "Compare Multiple Portfolios" (only monthly data applies).
+
+            Assign assets and weights for each portfolio on the following pages. Ensure weights sum to 1.
+
+            Click "Calculate Portfolio" or "Calculate & Compare" for results, which can be exported to Excel or PNG.
+
+            For single portfolios, view predictions using models like Monte Carlo.
+
+            Navigate back anytime.
+
+            Edit asset/index data via "Go to Admin."
+
         """
     )
     st.info(
