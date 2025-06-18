@@ -771,3 +771,97 @@ def show_predictions(combined_data, data_frequency):
         simulations_df.set_index('Date', inplace=True)
         st.line_chart(simulations_df)
         st.success("Simulation complete!")
+
+def generate_multi_summary_report_indices(finished_portfolios, allocation_limit):
+    """
+    Display a summary report comparing multiple portfolios.
+    finished_portfolios: dict of {portfolio_name: {combined_data, date_holdings_df, weights, asset_only_weights, period}}
+    """
+    st.header("Multi-Index Portfolio Comparison")
+
+    st.write("This report provides a summary of the portfolios performances, including key metrics, asset weights, and visualizations.")
+    st.write("The portfolios is rebalanced when allocation breaches the allocation limit for any position. This means that all the overflow of assets (or index holdings if the breach is in the index) are sold and the proceeds are used to buy the other assets in the portfolios such that they amount to the normal \% holdings specified.")
+    risk_free_rate = fetch_risk_free_rate(max(data["date_holdings_df"]['Date'].max() for data in finished_portfolios.values()), 
+                                            min(data["date_holdings_df"]['Date'].min() for data in finished_portfolios.values()))
+    # Show a table of key metrics for each portfolio
+    metrics_list = []
+    for name, data in finished_portfolios.items():
+        df = data["date_holdings_df"]
+        period = data["period"]
+        returns = df[df['Type'] == 'Asset']["Period Return"].dropna()
+        returns_with_dates = df[df['Type'] == 'Asset'].set_index('Date')["Period Return"].dropna()
+        sharpe = calculate_sharpe_ratio(returns_with_dates, period,risk_free_rate)
+        max_dd = calculate_maximum_drawdown(returns)
+        variance = calculate_variance(returns, period)
+        standard_deviation = calculate_stdev(returns, period)
+        ann_return = calculate_annualized_return(returns, period)
+        final_holdings = df['Total Holdings'].iloc[-1]
+        total_return = (final_holdings - data["start_investment"]) / data["start_investment"]
+
+        metrics_list.append({
+            "Portfolio": name,
+            "Sharpe Ratio": f"{sharpe:.2f}",
+            "Variance": f"{variance:.2%}",
+            "Standard Deviation": f"{standard_deviation:.2%}",
+            "Max Drawdown": f"{max_dd:.2%}",
+            "Annualized Return": f"{ann_return:.2%}",
+            "Start Investment": f"{data['start_investment']:.2f} SEK",
+            "Final Holdings": f"{final_holdings:.2f} SEK",
+            "Total Return": f"{total_return:.2%}"
+        })
+    if metrics_list:
+        metrics_df = pd.DataFrame(metrics_list).set_index('Portfolio')
+        st.subheader("Key Metrics Comparison")
+        st.write("This section provides key metrics for each portfolio. Variance and Sharpe Ratio are calculated based on the portfolio returns after ongoing charge (OGC).")
+        st.write("The Sharpe Ratio is a measure of risk-adjusted return, while variance indicates the volatility of the portfolio.")
+        st.write("The Sharpe Ratio is calculated using American T-Bills as risk-free rate.")
+        st.write("Period value " + str(period) + " is used to annualize the returns and volatility.")
+        st.write("The table below shows the key metrics per year for each portfolio.")
+        st.table(metrics_df)
+
+    # Plot all portfolios on the same chart
+    st.subheader("Portfolio Value Comparison")
+    st.write("This section shows the total holdings for each portfolio over time.")
+
+    fig_portfolio = plot_multi_portfolio_total_holdings_assets(finished_portfolios)
+    st.plotly_chart(fig_portfolio)
+
+    st.subheader("Rolling Average of Returns Comparison")
+    fig_rolling_multi = plot_multi_portfolio_rolling_average_returns(finished_portfolios)
+    st.plotly_chart(fig_rolling_multi)
+
+    # Plot drawdowns for all portfolios
+    st.subheader("Drawdowns Comparison")
+    st.write("This section shows the drawdowns for each portfolio over time.")
+    st.write("The drawdown is calculated as the percentage drop from the maximum value.")
+    fig_drawdowns_assets = plot_multi_portfolio_drawdowns_assets(finished_portfolios)
+    st.plotly_chart(fig_drawdowns_assets)
+
+    # Show the weights for each portfolio
+    for name, data in finished_portfolios.items():
+        st.subheader(f"Portfolio: {name}")
+        asset_only_weights = data["asset_only_weights"]
+        st.markdown("### Weights:")
+        show_weights(asset_only_weights, key=name + "_asset_only")
+
+
+    # Chnage the display names in the combined data
+    for name, data in finished_portfolios.items():
+        combined_data = data["combined_data"]
+        combined_data['Name'] = combined_data['Name'].map(lambda x: ASSETS_INDICES_MAP[x]["display name"] if x in ASSETS_INDICES_MAP else x)
+        data["combined_data"] = combined_data
+    # Show the portfolio data for each portfolio
+    for name, data in finished_portfolios.items():
+        st.subheader(f"Portfolio Data: {name}")
+        st.write(data["combined_data"])
+    # export report to Excel
+    if st.button("Export Multi-Portfolio Report to Excel"):
+        with pd.ExcelWriter('multi_index_summary_report.xlsx') as writer:
+            for name, data in finished_portfolios.items():
+                combined_data = data["combined_data"]
+                date_holdings_df = data["date_holdings_df"]
+                combined_data.to_excel(writer, sheet_name=f'{name}_Portfolio_Data', index=False)
+                date_holdings_df.to_excel(writer, sheet_name=f'{name}_Date_vs_Total_Holdings', index=False)
+        st.success("Multi-Portfolio Report exported to multi_index_summary_report.xlsx")
+
+

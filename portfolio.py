@@ -50,7 +50,21 @@ def get_categorized_assets(assets_map):
         categories[category].sort()
     return categories, display_name_to_asset_id
 
-def fetch_data_infront(tickers, index_tickers, start_date, end_date):
+def get_categorized_indices(assets_map):
+    categories = {"Equity Index": [], "Alternative Index": [], "Interest Bearing Index": []}
+    display_name_to_asset_id = {}
+    for asset, attributes in assets_map.items():
+        if attributes["type"] == "Index":
+            category = attributes.get("category", "Uncategorized")
+            if category in categories:
+                categories[category].append(attributes["display name"])
+                display_name_to_asset_id[attributes["display name"]] = asset
+    for category in categories:
+        categories[category].sort()
+    return categories, display_name_to_asset_id
+
+def fetch_data_infront(tickers, index_tickers, start_date, end_date,FX_tickers=["WFX:USDSEK","WFX:EURSEK"]):
+    
     with st.spinner("Fetching data for portfolios..."):
         try:
             
@@ -94,9 +108,61 @@ def fetch_data_infront(tickers, index_tickers, start_date, end_date):
                     index_data_frames.append(df)
                 asset_data = pd.concat(data_frames)
                 index_data = pd.concat(index_data_frames)
+
+                if FX_tickers:
+                    FX_history = infront.GetHistory(
+                        tickers=FX_tickers,
+                        fields=["last"],
+                        start_date=start_date.strftime('%Y-%m-%d'),
+                        end_date=end_date.strftime('%Y-%m-%d')
+                    )
+                    fx_data_frames = []
+                    i = 0
+                    for fx_ticker, fx_df in FX_history.items():
+                        print(f"Fetching data for {fx_ticker}")
+                        fx_df['Name'] = FX_tickers[i][-6:-3]
+                        fx_df['currency'] = FX_tickers[i][-6:-3]
+                        i += 1
+                        fx_data_frames.append(fx_df)
+                    fx_data = pd.concat(fx_data_frames)
+                    print(fx_data)
+                else:
+                    fx_data = pd.DataFrame(columns=['date', 'Name', 'last', 'Type'])
+                
+
                 combined_data = pd.concat([asset_data, index_data])
+                
+
+                # 1. Add a 'currency' column to your df using ASSETS_INDICES_MAP
+                combined_data['currency'] = combined_data['Name'].map(lambda x: ASSETS_INDICES_MAP.get(x, {}).get('currency', 'SEK'))
+                # If 'date' is not a column, reset index
+                if 'date' not in combined_data.columns:
+                    combined_data = combined_data.reset_index()
+                if 'date' not in fx_data.columns:
+                    fx_data = fx_data.reset_index()
+                                # Create dictionaries for fast FX lookup
+                usd_fx = fx_data[fx_data['currency'] == 'USD'].set_index('date')['last'].to_dict()
+                eur_fx = fx_data[fx_data['currency'] == 'EUR'].set_index('date')['last'].to_dict()
+
+                # Function to apply FX conversion
+                def apply_fx(row):
+                    if row['currency'] == 'USD':
+                        fx = usd_fx.get(row['date'], 1)
+                        return row['last'] * fx
+                    elif row['currency'] == 'EUR':
+                        fx = eur_fx.get(row['date'], 1)
+                        return row['last'] * fx
+                    else:
+                        return row['last']
+
+                combined_data['last'] = combined_data.apply(apply_fx, axis=1)
+                
+                print(combined_data)
 
                 st.session_state['cached_data'][cache_key] = combined_data
+
+
+
 
             return combined_data
         except Exception as e:
