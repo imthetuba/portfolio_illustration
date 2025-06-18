@@ -7,6 +7,8 @@ import plotly.io as pio
 from future_simulations import monte_carlo_simulation
 from InfrontConnect import infront
 
+
+
 # TOTAL_HOLDINGS = 'Totalt innehav'
 TOTAL_HOLDINGS = 'Total Holdings'
 # DATE = 'Datum'
@@ -36,11 +38,44 @@ DRAWDOWNS_IN_ASSETS_ALL_PORTFOLIOS = 'Drawdowns in Assets (All Portfolios)'
 # DRAWDOWN_PORTFOLIO_VS_INDEX = 'Nedgång portfölj vs index'
 DRAWDOWN_PORTFOLIO_VS_INDEX = 'Drawdown Portfolio vs Index'
 
+# high contrast colors
+
+HIGH_CONTRAST_COLORWAY = ["#1ABC9C", "#F06B4B", "#6A3A9C", "#E5E8EC","#30405F", "#000000"]
 # default colors
 pio.templates["my_custom"] = pio.templates["simple_white"]
-pio.templates["my_custom"].layout.colorway = [ "#1ABC9C", "#6A3A9C", "#F06B4B", "#F5B700", "#9BB1FF", "#292E1E", "#E6F14A ", "#CAA8F5", "#735F3D", "#285943", "#3F88C5", "#CDCACC", "#BC96E6"]
+pio.templates["my_custom"].layout.colorway = [ "#1ABC9C","#7E8BA7", "#30405F",  "#000000", "#6A3A9C", "#F06B4B", "#4A69F1", "#CAA8F5", "#F5B700", "#FF6F61", "#2D3047", "#493657", "#8D1919", "#F0E68C", "#FF4500", "#2E8B57", "#4682B4", "#D2691E", "#8B008B"]
 pio.templates["my_custom"].layout.paper_bgcolor = "rgba(0,0,0,0)" 
 pio.templates["my_custom"].layout.plot_bgcolor = "rgba(0,0,0,0)"
+pio.templates["my_custom"].layout.font = dict(
+    family="Segoe UI, sans-serif",
+    color="#404040",
+    size=15
+)
+
+pio.templates["my_custom"].layout.xaxis = dict(
+    showgrid=False,           # Remove vertical grid lines
+    showline=True,            # Show axis line
+    linecolor="#404040",      # Color for axis line (bottom line)
+    linewidth=1
+)
+pio.templates["my_custom"].layout.yaxis = dict(
+    showgrid=False,           # Remove horizontal grid lines
+    showline=False            # No left/right axis line
+)
+
+pio.templates["my_custom"].layout.title = dict(
+    x=0.5,  # Center the title
+    xanchor='center'
+)
+
+# Set legend position for all custom plots
+pio.templates["my_custom"].layout.legend = dict(
+    orientation="h",
+    x=0.5,
+    xanchor="center",
+    y=-0.2,
+    yanchor="top"
+)
 pio.templates.default = "my_custom"
 
 from portfolio import ASSETS_INDICES_MAP
@@ -331,7 +366,8 @@ def plot_multi_portfolio_total_holdings_assets(finished_portfolios):
         title=TOTAL_HOLDINGS_IN_ASSETS_OVER_TIME,
         xaxis_title=DATE,
         yaxis_title=TOTAL_HOLDINGS,
-        legend_title=PORTFOLIO
+        legend_title=PORTFOLIO, 
+        colorway=HIGH_CONTRAST_COLORWAY,
     )
     fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
 
@@ -356,7 +392,8 @@ def plot_multi_portfolio_total_holdings_indices(finished_portfolios):
         title=TOTAL_HOLDINGS_IN_INDICES_OVER_TIME_ALL_PORTFOLIOS,
         xaxis_title=DATE,
         yaxis_title=TOTAL_HOLDINGS,
-        legend_title=PORTFOLIO
+        legend_title=PORTFOLIO, 
+        colorway=HIGH_CONTRAST_COLORWAY,
     )
     fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
     return fig
@@ -381,7 +418,8 @@ def plot_multi_portfolio_drawdowns_assets(finished_portfolios):
         title=DRAWDOWNS_IN_ASSETS_ALL_PORTFOLIOS,
         xaxis_title=DATE,
         yaxis_title=DRAWDOWN,
-        legend_title=PORTFOLIO
+        legend_title=PORTFOLIO,
+        colorway=HIGH_CONTRAST_COLORWAY,
     )
     fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
     return fig
@@ -406,7 +444,8 @@ def plot_multi_portfolio_drawdowns_indices(finished_portfolios):
         title="Drawdowns in Indices (All Portfolios)",
         xaxis_title="Date",
         yaxis_title="Drawdown",
-        legend_title="Portfolio"
+        legend_title="Portfolio", 
+        colorway=HIGH_CONTRAST_COLORWAY,
     )
     fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
     return fig
@@ -488,7 +527,8 @@ def plot_multi_portfolio_rolling_average_returns(finished_portfolios, years=None
         yaxis_title='Rolling Avg Return',
         legend_title='Portfolio',
         paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)'
+        plot_bgcolor='rgba(0,0,0,0)', 
+        colorway=HIGH_CONTRAST_COLORWAY,
     )
     return fig
 
