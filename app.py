@@ -72,7 +72,6 @@ def show_stage_1():
     st.info(
         """
         **Instructions:**
-            Lycka till
 
             Select a standard portfolio or create your own by choosing assets.
 
