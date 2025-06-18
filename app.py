@@ -77,16 +77,15 @@ def show_stage_1():
             Select a standard portfolio or create your own by choosing assets.
 
             To compare multiple portfolios, choose the count and click "Compare Multiple Portfolios" (only monthly data applies).
-
+            
             Assign assets and weights for each portfolio on the following pages. Ensure weights sum to 1.
 
             Click "Calculate Portfolio" or "Calculate & Compare" for results, which can be exported to Excel or PNG.
 
             For single portfolios, view predictions using models like Monte Carlo.
 
-            Navigate back anytime.
-
-            Edit asset/index data via "Go to Admin."
+            Assets are categorized into Equity, Interest Bearing, and Alternative. They are mapped to indices for calculations.
+            Use the "Admin" page to edit asset/index data. Indices not in SEK are converted to SEK using FX.
 
         """
     )
