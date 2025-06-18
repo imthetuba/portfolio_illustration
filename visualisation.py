@@ -47,8 +47,6 @@ from portfolio import ASSETS_INDICES_MAP
 
 RISK_FREE_RATE = 0.01  # Example risk-free rate, adjust as needed
 
-# You may need to configure pdfkit with the path to wkhtmltopdf
-config = pdfkit.configuration()  # or pdfkit.configuration(wkhtmltopdf='/path/to/wkhtmltopdf')
 
 def fetch_risk_free_rate(end_date, start_date, period='month'):
     history = infront.GetHistory(
