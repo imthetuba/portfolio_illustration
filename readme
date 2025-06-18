@@ -1,93 +1,59 @@
 # Evisens Portföljillustrationsverktyg
 
-**Evisens Portföljillustrationsverktyg** is an interactive Streamlit-based tool for building, adjusting, and visualizing investment portfolios. The app allows users to select assets, assign weights, set investment parameters, and compare multiple portfolios side by side with clear visualizations.
+**Evisens Portföljillustrationsverktyg** är ett interaktivt verktyg byggt med Streamlit för att bygga, justera och visualisera investeringsportföljer. Appen låter användare välja tillgångar, tilldela vikter, ställa in investeringsparametrar och jämföra flera portföljer sida vid sida med tydliga visualiseringar.
 
+**Hosting på Streamlit Cloud**  
+Det lättaste sättet att köra för alla är att lägga upp koden i ett repo på GitHub och koppla GitHub-kontot till Streamlit Community Cloud. Då kan appen hostas på deras servrar genom att lägga till repot under "Add application". Detta är inte en superrobust lösning men funkar okej. 
 
-### Quickstart by double-clicking start_app.bat 
+### Snabbstart genom att dubbelklicka på start_app.bat
 
-## Features
+## Funktioner
 
-- **Asset Selection:** Choose from equities, alternatives, and interest-bearing assets.
-- **Custom Weights:** Assign custom weights to each asset in your portfolio.
-- **Portfolio Comparison:** Compare 2–4 portfolios in parallel, each with its own asset mix and weights.
-- **Dynamic Visualizations:** Instantly see your portfolio allocations as pie charts.
-- **Historical Analysis:** Set investment period and allocation limits to analyze portfolio performance over time.
-- **Admin Mode:** Special admin page for advanced settings or management.
+- **Tillgångsval:** Välj mellan aktier, alternativa tillgångar och räntebärande tillgångar.
+- **Egna vikter:** Tilldela egna vikter till varje tillgång i din portfölj.
+- **Portföljjämförelse:** Jämför 2–4 portföljer parallellt, var och en med sin egen tillgångsmix och vikter.
+- **Dynamiska visualiseringar:** Se dina portföljallokeringar direkt som cirkeldiagram.
+- **Historisk analys:** Ställ in investeringsperiod och allokeringsgränser för att analysera portföljens utveckling över tid.
+- **Adminläge:** Speciell adminsida för avancerade inställningar eller hantering.
 
-## Getting Started
-
-### Prerequisites
+### Förutsättningar
 
 - Python 3.8+
 - [Streamlit](https://streamlit.io/)
-- pandas, numpy, and any other dependencies listed in `requirements.txt`
+- pandas, numpy och övriga beroenden som listas i `requirements.txt`
 
 ### Installation
 
-1. **Install dependencies:**
+1. **Installera beroenden:**
     ```bash
     pip install -r requirements.txt
     ```
 
-2. **Run the app:**
+2. **Starta appen:**
     ```bash
-   python -m streamlit run app.py    
+    python -m streamlit run app.py    
     ```
 
+## Filstruktur
 
-## For Mac
-    ```cmd
-   python3 -m venv venv
-   source venv/bin/activate
-   pip install -r requirements.txt
-   streamlit run app.py 
-    ```
+- `app.py` — Huvudapplikationen för Streamlit.
+- `portfolio.py` — Beräkningar för portföljen.
+- `visualisation.py` — Plotly- och Streamlit-visualiseringar.
+- `requirements.txt` — Python-beroenden.
+- `README.md` — Projektdokumentation.
+- `company_ogc.csv` — Ongoing charge för evisens fonder.
+- `asset_indices_map.csv` — Bibliotek för att mappa index, positioner, valutor, kategorier och tickers till infront.
+- `standard_...._portfolio.csv` — Standardportföljvikter och positioner.
 
+## Anpassning
 
-## Usage
+- **Tillgångar:**  
+  Uppdatera tillgångsuniversumet i koden eller via adminverktyg vid behov.
 
-1. **Select Portfolio Stage:**  
-   Choose to build a single portfolio or compare multiple portfolios.
+- **Stil:**  
+  Ändra Streamlit-komponenter i Visualisation my_custom för ett eget utseende.
 
-2. **Select Assets:**  
-   Use the multi-select widgets to pick equities, alternatives, and interest-bearing assets.
+- **Modellportföljer:**  
+  Ändra tillgångar och vikter i modellportföljerna om så önskas.
 
-3. **Assign Weights:**  
-   Enter the desired weight for each asset. The tool checks that weights sum to 1.
-
-4. **Set Parameters:**  
-   Input your investment amount, allocation limits, and the analysis period.
-
-5. **Visualize & Compare:**  
-   View allocation pie charts and performance summaries for each portfolio.
-
-6. **Admin Mode:**  
-   Access advanced settings if you have admin privileges.
-
-## File Structure
-
-- `app.py` — Main Streamlit application.
-- `portfolio.py` — Calculations for the portfolio.
-- `visialisation.py` — Plotly and streamlit visualisations.
-- `requirements.txt` — Python dependencies.
-- `README.md` — Project documentation.
-
-## Customization
-
-- **Assets:**  
-  Update the asset universe in the code or via admin tools as needed.
-
-- **Styling:**  
-  Modify Streamlit components for a custom look and feel.
-
-- **Model portfolios:**  
-  Modify the assets and weights in the model portfolios if wanted.
-
-## Contributing
-
-Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change.
-
-
----
-
-**Developed by Tuva Gunnarsson 2025.**
+**Ursprungligen utvecklat av Tuva Gunnarsson 2025**
