@@ -485,6 +485,12 @@ def show_stage_4():
                 key=f"ogc_option_{i}"
             )
 
+            #choose specific allocation limit   
+            allocation_limit = st.number_input(
+                f"Allocation limit for Portfolio {i+1} (Plus/minus %)", 
+                min_value=0, max_value=100, value=7, key=f"allocation_limit_{i}"
+            )
+
 
     #Start investment amount
     start_investment = st.number_input("Start investment amount (SEK)", min_value=0, value=100000)
@@ -497,8 +503,8 @@ def show_stage_4():
     st.session_state['end_date'] = end_date
 
     #allocation limit
-    allocation_limit = st.number_input("Allocation limit (Plus/minus %)", min_value=0, max_value=100, value=7)
-    st.session_state['allocation_limit'] = allocation_limit
+    # allocation_limit = st.number_input("Allocation limit (Plus/minus %)", min_value=0, max_value=100, value=7)
+    # st.session_state['allocation_limit'] = allocation_limit
 
 
     # Save back to session state
@@ -519,7 +525,7 @@ def show_stage_5():
     st.logo("logo.png")
     st.title("Portfolio Comparison Results")
     portfolios = st.session_state.get('multi_portfolios', [])
-    allocation_limit = st.session_state.get('allocation_limit', 50)
+    # allocation_limit = st.session_state.get('allocation_limit', 50)
     start_date = st.session_state.get('start_date', datetime(2022, 1, 1))
     end_date = st.session_state.get('end_date', datetime.today())
     start_investment = st.session_state.get('start_investment', 100000)
@@ -538,6 +544,7 @@ def show_stage_5():
 
     # Fetch data for each portfolio and calculate results
     for i, portfolio in enumerate(portfolios):
+        allocation_limit = st.session_state.get(f'allocation_limit_{i}', 50)
         selected_assets = portfolio['selected_assets']
         weights = portfolio['weights']
         asset_only_weights = portfolio['asset_only_weights']

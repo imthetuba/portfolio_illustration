@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 import plotly.io as pio
 from future_simulations import monte_carlo_simulation
+from InfrontConnect import infront
 
 # TOTAL_HOLDINGS = 'Totalt innehav'
 TOTAL_HOLDINGS = 'Total Holdings'
@@ -49,6 +50,38 @@ RISK_FREE_RATE = 0.01  # Example risk-free rate, adjust as needed
 
 # You may need to configure pdfkit with the path to wkhtmltopdf
 config = pdfkit.configuration()  # or pdfkit.configuration(wkhtmltopdf='/path/to/wkhtmltopdf')
+
+def fetch_risk_free_rate(end_date, start_date, period='month'):
+    history = infront.GetHistory(
+        tickers=["NSx:OMRXTBILL"],
+        fields=["last"],
+        start_date=start_date.strftime('%Y-%m-%d'),
+        end_date=end_date.strftime('%Y-%m-%d')
+    )
+    df = next(iter(history.values()))  # or history["OMRXTBILL:2087"]
+    df = df.reset_index()  # Moves 'date' from index to column
+    df.rename(columns={"last": "OMRXTBILL"}, inplace=True)
+
+    # Ensure the 'date' column is in datetime format
+    df['date'] = pd.to_datetime(df['date'])
+
+    # Sort the DataFrame by date
+    df = df.sort_values('date')
+
+    # Calculate the period return based on the specified period
+    if period == 'month':
+        df['Period Return'] = df['OMRXTBILL'].pct_change(periods=30)
+    elif period == 'week':
+        df['Period Return'] = df['OMRXTBILL'].pct_change(periods=7)
+    elif period == 'day':
+        df['Period Return'] = df['OMRXTBILL'].pct_change(periods=1)
+    else:
+        raise ValueError("Invalid period specified. Choose from 'month', 'week', or 'day'.")
+
+    return df.set_index('date')['Period Return']
+    
+
+        
 
 def plot_holdings(combined_data):
     # Separate the data into assets and indices
@@ -221,6 +254,8 @@ def calculate_sharpe_ratio(returns,period, risk_free_rate=RISK_FREE_RATE ):
     """
     Calculate the Sharpe Ratio for a given series of returns.
     """
+    if isinstance(risk_free_rate, pd.Series):
+        risk_free_rate = risk_free_rate.reindex(returns.index, method='pad').fillna(0)
     excess_returns = returns - risk_free_rate / period
     annualized_excess_returns = excess_returns.mean() * period
     annualized_volatility = excess_returns.std() * np.sqrt(period)
@@ -472,14 +507,15 @@ def generate_summary_report(combined_data, date_holdings_df, start_investment, a
     st.write("The portfolio returns are adjusted for ongoing charges (OGC) and the allocation limit is set to " + str(allocation_limit) + "%.")
     st.write("The portfolio is rebalanced when allocation breaches the allocation limit for any position. This means that all the overflow of assets (or index holdings if the breach is in the index) are sold and the proceeds are used to buy the other assets in the portfolio such that they amount to the normal \% holdings specified.")
 
-
+    risk_free_rate = fetch_risk_free_rate(date_holdings_df['Date'].max(), date_holdings_df['Date'].min())
     st.subheader("Key Metrics")
     st.write("This section provides key metrics for the portfolio. Variance and Sharpe Ratio are calculated based on the portfolio returns after ongoing charge (OGC).")
     st.write("The Sharpe Ratio is a measure of risk-adjusted return, while variance indicates the volatility of the portfolio.")
-    st.write("The Sharpe Ratio is calculated using a risk-free rate of " + str(RISK_FREE_RATE) + " per year.")
+    st.write("The Sharpe Ratio is calculated using T-Bills as the risk-free rate.")
     st.write("Period value " + str(period) + " is used to annualize the returns and volatility.")
     portfolio_returns = date_holdings_df[date_holdings_df['Type'] == 'Asset']["Period Return"].dropna()
-    sharpe_ratio = calculate_sharpe_ratio(portfolio_returns, period)
+    returns_with_dates = date_holdings_df[date_holdings_df['Type'] == 'Asset'].set_index('Date')["Period Return"].dropna()
+    sharpe_ratio = calculate_sharpe_ratio(returns_with_dates, period, risk_free_rate)
     variance = calculate_variance(portfolio_returns, period)
     max_drawdown = calculate_maximum_drawdown(portfolio_returns)
     stdev = calculate_stdev(portfolio_returns, period)
@@ -596,14 +632,16 @@ def generate_multi_summary_report(finished_portfolios, allocation_limit):
     st.write("This report provides a summary of the portfolios performances, including key metrics, asset weights, and visualizations.")
     st.write("The portfolios returns are adjusted for ongoing charges (OGC) and the allocation limit is set to " + str(allocation_limit) + "%.")
     st.write("The portfolios is rebalanced when allocation breaches the allocation limit for any position. This means that all the overflow of assets (or index holdings if the breach is in the index) are sold and the proceeds are used to buy the other assets in the portfolios such that they amount to the normal \% holdings specified.")
-
+    risk_free_rate = fetch_risk_free_rate(max(data["date_holdings_df"]['Date'].max() for data in finished_portfolios.values()), 
+                                            min(data["date_holdings_df"]['Date'].min() for data in finished_portfolios.values()))
     # Show a table of key metrics for each portfolio
     metrics_list = []
     for name, data in finished_portfolios.items():
         df = data["date_holdings_df"]
         period = data["period"]
         returns = df[df['Type'] == 'Asset']["Period Return"].dropna()
-        sharpe = calculate_sharpe_ratio(returns, period)
+        returns_with_dates = df[df['Type'] == 'Asset'].set_index('Date')["Period Return"].dropna()
+        sharpe = calculate_sharpe_ratio(returns_with_dates, period,risk_free_rate)
         max_dd = calculate_maximum_drawdown(returns)
         variance = calculate_variance(returns, period)
         standard_deviation = calculate_stdev(returns, period)
@@ -627,7 +665,7 @@ def generate_multi_summary_report(finished_portfolios, allocation_limit):
         st.subheader("Key Metrics Comparison")
         st.write("This section provides key metrics for each portfolio. Variance and Sharpe Ratio are calculated based on the portfolio returns after ongoing charge (OGC).")
         st.write("The Sharpe Ratio is a measure of risk-adjusted return, while variance indicates the volatility of the portfolio.")
-        st.write("The Sharpe Ratio is calculated using a risk-free rate of " + str(RISK_FREE_RATE) + " per year.")
+        st.write("The Sharpe Ratio is calculated using American T-Bills as risk-free rate.")
         st.write("Period value " + str(period) + " is used to annualize the returns and volatility.")
         st.write("The table below shows the key metrics per year for each portfolio.")
         st.table(metrics_df)
