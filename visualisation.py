@@ -711,7 +711,7 @@ def generate_multi_summary_report(finished_portfolios, allocation_limit):
         variance = calculate_variance(returns, period)
         standard_deviation = calculate_stdev(returns, period)
         ann_return = calculate_annualized_return(returns, period)
-        final_holdings = df['Total Holdings'].iloc[-1]
+        final_holdings = df[(df['Type'] == 'Asset') & (df['Date'] == df['Date'].max())]['Total Holdings'].iloc[-1]
         total_return = (final_holdings - data["start_investment"]) / data["start_investment"]
 
         metrics_list.append({
@@ -857,7 +857,7 @@ def generate_multi_summary_report_indices(finished_portfolios, allocation_limit)
         variance = calculate_variance(returns, period)
         standard_deviation = calculate_stdev(returns, period)
         ann_return = calculate_annualized_return(returns, period)
-        final_holdings = df['Total Holdings'].iloc[-1]
+        final_holdings = df[(df['Type'] == 'Asset') & (df['Date'] == df['Date'].max())]['Total Holdings'].iloc[-1]
         total_return = (final_holdings - data["start_investment"]) / data["start_investment"]
 
         metrics_list.append({

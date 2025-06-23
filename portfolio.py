@@ -376,5 +376,7 @@ def create_portfolio(combined_data, weights, start_investment, allocation_limit)
     date_holdings_df = date_holdings_df.sort_values(['Type', 'Date'])
     date_holdings_df['Period Return'] = date_holdings_df.groupby('Type')['Total Holdings'].pct_change().fillna(0)
 
+    # Sort the date_holdings_df first by Type and then by Date
+    date_holdings_df = date_holdings_df.sort_values(by=['Type', 'Date'])
     
     return combined_data, date_holdings_df
