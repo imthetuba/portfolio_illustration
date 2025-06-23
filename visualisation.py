@@ -11,34 +11,42 @@ import io
 
 
 
-# TOTAL_HOLDINGS = 'Totalt innehav'
-TOTAL_HOLDINGS = 'Total Holdings'
-# DATE = 'Datum'
-DATE = 'Date'
-# PORTFOLIO = 'Portfölj'
-PORTFOLIO = 'Portfolio'
-# ALLOCATION_WEIGHTS = 'Allokeringsvikter'
-ALLOCATION_WEIGHTS = 'Allocation Weights'
-# DATE_VS_TOTAL_HOLDINGS = 'Datum vs Totalt Innehav'
-DATE_VS_TOTAL_HOLDINGS = 'Date vs Total Holdings'
-# DRAWDOWN = 'Nedgång'
-DRAWDOWN = 'Drawdown'
-# HOLDINGS_IN_ASSETS_VS_INDICES = 'Innehav i tillgångar vs index'
-HOLDINGS_IN_ASSETS_VS_INDICES = 'Holdings in Assets vs Indices'
-# HOLDINGS = 'Innehav'
-HOLDINGS = 'Holdings'
-# ASSETS_AND_INDICES = 'Tillgångar och Index'
-ASSETS_AND_INDICES = 'Assets and Indices'
-# TYPE = 'Typ'
-TYPE = 'Type'
-# TOTAL_HOLDINGS_IN_ASSETS_OVER_TIME = 'Totalt innehav i tillgångar över tid (alla portföljer)'
-TOTAL_HOLDINGS_IN_ASSETS_OVER_TIME = 'Total Holdings in Assets Over Time (All Portfolios)'
-# TOTAL_HOLDINGS_IN_INDICES_OVER_TIME_ALL_PORTFOLIOS = 'Totalt innehav i index över tid (alla portföljer)'
-TOTAL_HOLDINGS_IN_INDICES_OVER_TIME_ALL_PORTFOLIOS = 'Total Holdings in Indices Over Time (All Portfolios)'
-# DRAWDOWNS_IN_ASSETS_ALL_PORTFOLIOS = 'Nedgångar i tillgångar (alla portföljer)'
-DRAWDOWNS_IN_ASSETS_ALL_PORTFOLIOS = 'Drawdowns in Assets (All Portfolios)'
-# DRAWDOWN_PORTFOLIO_VS_INDEX = 'Nedgång portfölj vs index'
-DRAWDOWN_PORTFOLIO_VS_INDEX = 'Drawdown Portfolio vs Index'
+TOTAL_HOLDINGS = 'Totalt innehav'
+# TOTAL_HOLDINGS = 'Total Holdings'
+DATE = 'Datum'
+# DATE = 'Date'
+RETURN = 'Avkastning'
+# RETURN = 'Return'
+ROLLING_AVG_RETURN = 'Rullande medelvärde av avkastning'
+# ROLLING_AVG_RETURN = 'Rolling Average Return'
+
+PORTFOLIO = 'Portfölj'
+# PORTFOLIO = 'Portfolio'
+ALLOCATION_WEIGHTS = 'Allokeringsvikter'
+# ALLOCATION_WEIGHTS = 'Allocation Weights'
+DATE_VS_TOTAL_HOLDINGS = 'Datum vs Totalt Innehav'
+# DATE_VS_TOTAL_HOLDINGS = 'Date vs Total Holdings'
+DRAWDOWN = 'Värdefall'
+# DRAWDOWN = 'Drawdown'
+HOLDINGS_IN_ASSETS_VS_INDICES = 'Innehav i tillgångar vs index'
+# HOLDINGS_IN_ASSETS_VS_INDICES = 'Holdings in Assets vs Indices'
+HOLDINGS = 'Innehav'
+# HOLDINGS = 'Holdings'
+ASSETS_AND_INDICES = 'Tillgångar och Index'
+# ASSETS_AND_INDICES = 'Assets and Indices'
+TYPE = 'Typ'
+# TYPE = 'Type'
+TOTAL_HOLDINGS_IN_ASSETS_OVER_TIME = 'Totalt innehav i tillgångar över tid (alla portföljer)'
+# TOTAL_HOLDINGS_IN_ASSETS_OVER_TIME = 'Total Holdings in Assets Over Time (All Portfolios)'
+TOTAL_HOLDINGS_IN_INDICES_OVER_TIME_ALL_PORTFOLIOS = 'Totalt innehav i index över tid (alla portföljer)'
+# TOTAL_HOLDINGS_IN_INDICES_OVER_TIME_ALL_PORTFOLIOS = 'Total Holdings in Indices Over Time (All Portfolios)'
+DRAWDOWNS_IN_ASSETS_ALL_PORTFOLIOS = 'Värdefall i tillgångar (alla portföljer)'
+# DRAWDOWNS_IN_ASSETS_ALL_PORTFOLIOS = 'Drawdowns in Assets (All Portfolios)'
+DRAWDOWN_PORTFOLIO_VS_INDEX = 'Värdefall portfölj vs index'
+# DRAWDOWN_PORTFOLIO_VS_INDEX = 'Drawdown Portfolio vs Index'
+DRAWDOWNS_IN_INDICES_ALL_PORTFOLIOS = 'Värdefall i index (alla portföljer)'
+# DRAWDOWNS_IN_INDICES_ALL_PORTFOLIOS = 'Drawdowns in Indices (All Portfolios)'
+
 
 # high contrast colors
 
@@ -514,10 +522,10 @@ def plot_multi_portfolio_drawdowns_indices(finished_portfolios):
                 name=name
             ))
     fig.update_layout(
-        title="Drawdowns in Indices (All Portfolios)",
-        xaxis_title="Date",
-        yaxis_title="Drawdown",
-        legend_title="Portfolio", 
+        title=DRAWDOWNS_IN_INDICES_ALL_PORTFOLIOS,
+        xaxis_title=DATE,
+        yaxis_title=DRAWDOWN,
+        legend_title=PORTFOLIO,
         colorway=HIGH_CONTRAST_COLORWAY,
     )
     fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
@@ -553,19 +561,18 @@ def plot_rolling_average_returns_vs_index(date_holdings_df, years=None, date_col
     fig = go.Figure()
     fig.add_trace(go.Scatter(
         x=asset_rolling.index, y=asset_rolling,
-        mode='lines', name=f"Portfolio ({years}y rolling avg)"
+        mode='lines', name=f"Portfölj ({years}å rullande medelvärde)"
     ))
     fig.add_trace(go.Scatter(
         x=index_rolling.index, y=index_rolling,
-        mode='lines', name=f"Index ({years}y rolling avg)"
+        mode='lines', name=f"Index ({years}å rullande medelvärde)"
     ))
     fig.update_layout(
-        title="Rolling Average of Returns (Portfolio vs Index)",
-        xaxis_title='Date',
-        yaxis_title='Rolling Avg Return',
-        legend_title='Type',
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)'
+        title=ROLLING_AVG_RETURN,
+        xaxis_title=DATE,
+        yaxis_title=RETURN,
+        legend_title=PORTFOLIO,
+        colorway=HIGH_CONTRAST_COLORWAY,
     )
     return fig
 
@@ -595,12 +602,10 @@ def plot_multi_portfolio_rolling_average_returns(finished_portfolios, years=None
         ))
 
     fig.update_layout(
-        title="Rolling Average of Returns (All Portfolios)",
-        xaxis_title='Date',
-        yaxis_title='Rolling Avg Return',
-        legend_title='Portfolio',
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)', 
+        title=ROLLING_AVG_RETURN,
+        xaxis_title=DATE,
+        yaxis_title=RETURN,
+        legend_title=PORTFOLIO,
         colorway=HIGH_CONTRAST_COLORWAY,
     )
     return fig
