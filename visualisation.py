@@ -6,6 +6,8 @@ import plotly.express as px
 import plotly.io as pio
 from future_simulations import monte_carlo_simulation
 from InfrontConnect import infront
+import io
+
 
 
 
@@ -322,30 +324,72 @@ def calculate_stdev(returns,period):
     """
     return returns.std() * np.sqrt(period)   
 
-def export_report_to_excel(combined_data, date_holdings_df, start_investment, allocation_limit, weights, sharpe_ratio):
-    """
-    Export the summary report to an Excel file.
-    """
-    with pd.ExcelWriter('summary_report.xlsx') as writer:
+
+def export_report_to_excel(combined_data, date_holdings_df, start_investment, allocation_limit, weights, sharpe_ratio, std_dev):
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         # Write key metrics to a sheet
         metrics_df = pd.DataFrame({
-            "Metric": ["Start Investment Amount", "Allocation Limit", "Sharpe Ratio"],
-            "Value": [f"{start_investment} SEK", f"{allocation_limit}%", f"{sharpe_ratio:.2f}"]
+            "Metric": ["Start Investment Amount", "Allocation Limit", "Sharpe Ratio", "Standard Deviation"],
+            "Value": [f"{start_investment} SEK", f"{allocation_limit}%", f"{sharpe_ratio:.2f}", f"{std_dev:.2f}"]
         })
         metrics_df.to_excel(writer, sheet_name='Key Metrics', index=False)
-
         # Write asset weights to a sheet
         weights_df = pd.DataFrame(list(weights.items()), columns=['Asset', 'Weight'])
         weights_df['Display Name'] = weights_df['Asset'].apply(lambda x: ASSETS_INDICES_MAP[x].get("display name", x))
         weights_df.to_excel(writer, sheet_name='Asset Weights', index=False)
-
         # Write portfolio data to a sheet
         combined_data.to_excel(writer, sheet_name='Portfolio Data', index=False)
-
         # Write date vs total holdings data to a sheet
         date_holdings_df.to_excel(writer, sheet_name='Date vs Total Holdings Data', index=False)
+    output.seek(0)
+    st.download_button(
+        label="Download Summary Report Excel",
+        data=output,
+        file_name="summary_report.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
 
-    st.success("Report exported to summary_report.xlsx")
+
+def export_multi_port_to_excel(finished_portfolios):
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        for name, data in finished_portfolios.items():
+            # Write key metrics for each portfolio
+            metrics = {
+                "Start Investment Amount": [f"{data.get('start_investment', '')} SEK"],
+                "Allocation Limit": [f"{data.get('allocation_limit', '')}%"],
+                "Sharpe Ratio": [f"{data.get('sharpe_ratio', float('nan')):.2f}"],
+                "Std Dev": [f"{data.get('std_dev', float('nan')):.2f}"]
+            }
+            metrics_df = pd.DataFrame(metrics)
+            metrics_df.to_excel(writer, sheet_name=f'{name}_Metrics', index=False)
+
+            # Write asset weights
+            weights = data.get('weights', {})
+            if weights:
+                weights_df = pd.DataFrame(list(weights.items()), columns=['Asset', 'Weight'])
+                # If you have ASSETS_INDICES_MAP available, you can add display names
+                # weights_df['Display Name'] = weights_df['Asset'].apply(lambda x: ASSETS_INDICES_MAP[x].get("display name", x))
+                weights_df.to_excel(writer, sheet_name=f'{name}_Weights', index=False)
+
+            # Write combined data
+            combined_data = data.get('combined_data')
+            if combined_data is not None:
+                combined_data.to_excel(writer, sheet_name=f'{name}_Data', index=False)
+
+            # Write date vs total holdings data
+            date_holdings_df = data.get('date_holdings_df')
+            if date_holdings_df is not None:
+                date_holdings_df.to_excel(writer, sheet_name=f'{name}_Holdings', index=False)
+
+    output.seek(0)
+    st.download_button(
+        label="Export Multi-Portfolio Summary Report",
+        data=output,
+        file_name="multi_summary_report.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
 
 def plot_multi_portfolio_total_holdings_assets(finished_portfolios):
     """
@@ -594,20 +638,14 @@ def generate_summary_report(combined_data, date_holdings_df, start_investment, a
     })
     st.table(metrics_df)
 
-    # Display weights
-    st.subheader("Asset Weights")
-    for asset, weight in weights.items():
-        display_name = ASSETS_INDICES_MAP[asset].get("display name", asset)
-        st.write(f"{display_name}: {weight:.3f}")
 
     # Show weights pie chart
-    st.subheader("Asset Allocation Weights")     
+    st.subheader("Asset Allocation")     
     show_weights(asset_weights, key="asset_only")
 
     # Show the index weights
-    st.subheader("Index allocation weights")
+    st.subheader("Index allocation")
     index_only_weights = {k: v for k, v in weights.items() if k not in asset_weights}
-    st.markdown("### Index Weights:")
     show_weights(index_only_weights, key="index_only")
 
 
@@ -634,19 +672,9 @@ def generate_summary_report(combined_data, date_holdings_df, start_investment, a
     fig_drawdowns = plot_drawdowns(portfolio_data, index_data)
     st.plotly_chart(fig_drawdowns)
 
-    # Plot all holdings
-    #st.subheader("All Holdings")    
-    #all_holdings_plots = plot_all_holdings(combined_data)
-    #for asset_display_name, fig in all_holdings_plots.items():
-    #    st.markdown(f"**{asset_display_name}**")
-    #    st.plotly_chart(fig)
-
-
     # Replace asset IDs with display names in 'Name' column of combined_data
     combined_data['Name'] = combined_data['Name'].map(lambda x: ASSETS_INDICES_MAP[x]["display name"] if x in ASSETS_INDICES_MAP else x)
    
-
-
     # Display portfolio data
     st.subheader("Portfolio Data")
     st.write(combined_data)
@@ -655,8 +683,8 @@ def generate_summary_report(combined_data, date_holdings_df, start_investment, a
     st.subheader("Date vs Total Holdings Data")
     st.write(date_holdings_df)
     # Export report to Excel
-    if st.button("Export Report to Excel"):
-        export_report_to_excel(combined_data, date_holdings_df, start_investment, allocation_limit, weights, sharpe_ratio)
+    
+    export_report_to_excel(combined_data, date_holdings_df, start_investment, allocation_limit, weights, sharpe_ratio, stdev)
 
 
 def generate_multi_summary_report(finished_portfolios, allocation_limit):
@@ -764,14 +792,8 @@ def generate_multi_summary_report(finished_portfolios, allocation_limit):
         st.subheader(f"Portfolio Data: {name}")
         st.write(data["combined_data"])
     # export report to Excel
-    if st.button("Export Multi-Portfolio Report to Excel"):
-        with pd.ExcelWriter('multi_summary_report.xlsx') as writer:
-            for name, data in finished_portfolios.items():
-                combined_data = data["combined_data"]
-                date_holdings_df = data["date_holdings_df"]
-                combined_data.to_excel(writer, sheet_name=f'{name}_Portfolio_Data', index=False)
-                date_holdings_df.to_excel(writer, sheet_name=f'{name}_Date_vs_Total_Holdings', index=False)
-        st.success("Multi-Portfolio Report exported to multi_summary_report.xlsx")
+
+    export_multi_port_to_excel(finished_portfolios)
 
 
 def show_predictions(combined_data, data_frequency):
@@ -895,13 +917,4 @@ def generate_multi_summary_report_indices(finished_portfolios, allocation_limit)
         st.subheader(f"Portfolio Data: {name}")
         st.write(data["combined_data"])
     # export report to Excel
-    if st.button("Export Multi-Portfolio Report to Excel"):
-        with pd.ExcelWriter('multi_index_summary_report.xlsx') as writer:
-            for name, data in finished_portfolios.items():
-                combined_data = data["combined_data"]
-                date_holdings_df = data["date_holdings_df"]
-                combined_data.to_excel(writer, sheet_name=f'{name}_Portfolio_Data', index=False)
-                date_holdings_df.to_excel(writer, sheet_name=f'{name}_Date_vs_Total_Holdings', index=False)
-        st.success("Multi-Portfolio Report exported to multi_index_summary_report.xlsx")
-
-
+    export_multi_port_to_excel(finished_portfolios)
