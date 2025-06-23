@@ -324,6 +324,35 @@ def calculate_stdev(returns,period):
     """
     return returns.std() * np.sqrt(period)   
 
+def calculate_alpha(returns_with_dates,index_returns_with_dates):
+    """
+    Calculate the alpha of a portfolio against a benchmark index. Returns and index returns should be aligned.
+    """
+    # Align the returns and index returns by their dates
+    aligned_data = pd.merge(returns_with_dates, index_returns_with_dates, left_index=True, right_index=True, how='inner')
+    returns = aligned_data.iloc[:, 0]
+    index_returns = aligned_data.iloc[:, 1]
+
+    b =  calculate_beta(returns_with_dates, index_returns_with_dates)
+    returns_total = (1 + returns).prod() - 1
+    index_returns_total = (1 + index_returns).prod() - 1
+    alpha = returns_total - b * index_returns_total
+    return alpha
+
+
+def calculate_beta(returns_with_dates, index_returns_with_dates):
+    """
+    Calculate the beta of a portfolio against a benchmark index. Returns and index returns should be aligned.
+    """
+    # Align the returns and index returns by their dates
+    aligned_data = pd.merge(returns_with_dates, index_returns_with_dates, left_index=True, right_index=True, how='inner')
+    returns = aligned_data.iloc[:, 0]
+    index_returns = aligned_data.iloc[:, 1]
+
+    covariance = np.cov(returns, index_returns)[0][1]
+    variance = np.var(index_returns)
+    beta = covariance / variance if variance != 0 else 0
+    return beta
 
 def export_report_to_excel(combined_data, date_holdings_df, start_investment, allocation_limit, weights, sharpe_ratio, std_dev):
     output = io.BytesIO()
@@ -592,10 +621,13 @@ def generate_summary_report(combined_data, date_holdings_df, start_investment, a
     st.subheader("Key Metrics")
     st.write("This section provides key metrics for the portfolio. Variance and Sharpe Ratio are calculated based on the portfolio returns after ongoing charge (OGC).")
     st.write("The Sharpe Ratio is a measure of risk-adjusted return, while variance indicates the volatility of the portfolio.")
-    st.write("The Sharpe Ratio is calculated using T-Bills as the risk-free rate.")
+    st.write("The Sharpe Ratio is calculated using T-Bills as the risk-free rate. Alpha and Beta are calculated against the index returns. Alpha indicates the excess return of the portfolio compared to the index, while Beta measures the sensitivity of the portfolio's returns to the index's returns.")
     st.write("Period value " + str(period) + " is used to annualize the returns and volatility.")
     portfolio_returns = date_holdings_df[date_holdings_df['Type'] == 'Asset']["Period Return"].dropna()
-    returns_with_dates = date_holdings_df[date_holdings_df['Type'] == 'Asset'].set_index('Date')["Period Return"].dropna()
+    index_returns_with_dates = date_holdings_df.loc[date_holdings_df['Type'] == 'Index', ['Date', 'Period Return']].copy()
+    index_returns_with_dates = index_returns_with_dates.set_index('Date')["Period Return"].dropna()
+    returns_with_dates = date_holdings_df.loc[date_holdings_df['Type'] == 'Asset', ['Date', 'Period Return']].copy()
+    returns_with_dates = returns_with_dates.set_index('Date')["Period Return"].dropna()
     sharpe_ratio = calculate_sharpe_ratio(returns_with_dates, period, risk_free_rate)
     variance = calculate_variance(portfolio_returns, period)
     max_drawdown = calculate_maximum_drawdown(portfolio_returns)
@@ -605,11 +637,16 @@ def generate_summary_report(combined_data, date_holdings_df, start_investment, a
     total_return = (final_holdings - start_investment) / start_investment
     total_return_index = (date_holdings_df[date_holdings_df['Type'] == 'Index']['Total Holdings'].iloc[-1] - start_investment) / start_investment
     stdev_index = calculate_stdev(date_holdings_df[date_holdings_df['Type'] == 'Index']["Period Return"].dropna(), period)
+    alpha = calculate_alpha(returns_with_dates, index_returns_with_dates)
+    beta = calculate_beta(returns_with_dates, index_returns_with_dates)
+
     metrics_df = pd.DataFrame({
         "Metric": [
             
             "Allocation Limit",
             "Sharpe Ratio",
+            "Alpha",
+            "Beta",
             "Standard Deviation",
             "Standard Deviation (Index)",
             "Variance",
@@ -625,6 +662,8 @@ def generate_summary_report(combined_data, date_holdings_df, start_investment, a
             
             f"{allocation_limit}%",
             f"{sharpe_ratio:.2f}",
+            f"{alpha:.2f}",
+            f"{beta:.2f}",
             f"{stdev * 100:.2f}%",
             f"{stdev_index * 100:.2f}%",
             f"{variance * 100:.2f}%",
@@ -705,7 +744,10 @@ def generate_multi_summary_report(finished_portfolios, allocation_limit):
         df = data["date_holdings_df"]
         period = data["period"]
         returns = df[df['Type'] == 'Asset']["Period Return"].dropna()
-        returns_with_dates = df[df['Type'] == 'Asset'].set_index('Date')["Period Return"].dropna()
+        index_returns_with_dates = df.loc[df['Type'] == 'Index', ['Date', 'Period Return']].copy()
+        index_returns_with_dates = index_returns_with_dates.set_index('Date')["Period Return"].dropna()
+        returns_with_dates = df.loc[df['Type'] == 'Asset', ['Date', 'Period Return']].copy()
+        returns_with_dates = returns_with_dates.set_index('Date')["Period Return"].dropna()
         sharpe = calculate_sharpe_ratio(returns_with_dates, period,risk_free_rate)
         max_dd = calculate_maximum_drawdown(returns)
         variance = calculate_variance(returns, period)
@@ -713,10 +755,13 @@ def generate_multi_summary_report(finished_portfolios, allocation_limit):
         ann_return = calculate_annualized_return(returns, period)
         final_holdings = df[(df['Type'] == 'Asset') & (df['Date'] == df['Date'].max())]['Total Holdings'].iloc[-1]
         total_return = (final_holdings - data["start_investment"]) / data["start_investment"]
-
+        alpha = calculate_alpha(returns_with_dates, index_returns_with_dates)
+        beta = calculate_beta(returns_with_dates, index_returns_with_dates)
         metrics_list.append({
             "Portfolio": name,
             "Sharpe Ratio": f"{sharpe:.2f}",
+            "Alpha": f"{alpha:.2f}",
+            "Beta": f"{beta:.2f}",
             "Variance": f"{variance:.2%}",
             "Standard Deviation": f"{standard_deviation:.2%}",
             "Max Drawdown": f"{max_dd:.2%}",
@@ -730,7 +775,7 @@ def generate_multi_summary_report(finished_portfolios, allocation_limit):
         st.subheader("Key Metrics Comparison")
         st.write("This section provides key metrics for each portfolio. Variance and Sharpe Ratio are calculated based on the portfolio returns after ongoing charge (OGC).")
         st.write("The Sharpe Ratio is a measure of risk-adjusted return, while variance indicates the volatility of the portfolio.")
-        st.write("The Sharpe Ratio is calculated using American T-Bills as risk-free rate.")
+        st.write("The Sharpe Ratio is calculated using T-Bills as the risk-free rate. Alpha and Beta are calculated against the index returns. Alpha indicates the excess return of the portfolio compared to the index, while Beta measures the sensitivity of the portfolio's returns to the index's returns.")
         st.write("Period value " + str(period) + " is used to annualize the returns and volatility.")
         st.write("The table below shows the key metrics per year for each portfolio.")
         st.table(metrics_df)
