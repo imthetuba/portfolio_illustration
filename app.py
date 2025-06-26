@@ -226,7 +226,7 @@ def show_stage_2():
     category_weights = {}
     for cat in selected_cats:
         category_weights[cat] = st.number_input(
-            f"Weight for {cat}", min_value=0.0, max_value=1.0,
+            f" {cat}", min_value=0.0, max_value=1.0,
             value=default_category_weights.get(cat, round(1.0/len(selected_cats), 2)) if len(selected_cats) > 0 else 0.0,
             key=f"cat_weight_{cat}"
         )
@@ -243,7 +243,7 @@ def show_stage_2():
             for asset in assets_by_category[cat]:
                 display_name = ASSETS_INDICES_MAP[asset].get("display name", asset)
                 asset_weights[cat][asset] = st.number_input(
-                    f"Weight for {display_name} in {cat}",
+                    f"{display_name}",
                     min_value=0.0, max_value=1.0,
                     value=default_asset_weights.get(cat, {}).get(asset, round(1.0/total_assets, 2)) if total_assets > 0 else 0.0,
                     key=f"{cat}_asset_weight_{asset}"
@@ -439,7 +439,7 @@ def show_stage_4():
             default_cat_weights = default_category_weights_list[i]
             for cat in selected_cats:
                 category_weights[cat] = st.number_input(
-                    f"Weight for {cat} (Portfolio {i+1})", min_value=0.0, max_value=1.0,
+                    f"{cat}", min_value=0.0, max_value=1.0,
                     value=default_cat_weights.get(cat, round(1.0/len(selected_cats), 2)) if len(selected_cats) > 0 else 0.0,
                     key=f"cat_weight_{cat}_{i}"
                 )
@@ -457,7 +457,7 @@ def show_stage_4():
                     for asset in assets_by_category[cat]:
                         display_name = ASSETS_INDICES_MAP[asset].get("display name", asset)
                         asset_weights[cat][asset] = st.number_input(
-                            f"Weight for {display_name} in {cat} (Portfolio {i+1})",
+                            f"{display_name}",
                             min_value=0.0, max_value=1.0,
                             value=default_asset_weights.get(cat, {}).get(asset, round(1.0/total_assets, 2)) if total_assets > 0 else 0.0,
                             key=f"{cat}_asset_weight_{asset}_{i}"
@@ -698,7 +698,7 @@ def show_stage_7():
             default_cat_weights = default_category_weights_list[i]
             for cat in selected_cats:
                 category_weights[cat] = st.number_input(
-                    f"Weight for {cat} (Portfolio {i+1})", min_value=0.0, max_value=1.0,
+                    f"{cat}", min_value=0.0, max_value=1.0,
                     value=default_cat_weights.get(cat, round(1.0/len(selected_cats), 2)) if len(selected_cats) > 0 else 0.0,
                     key=f"cat_weight_{cat}_{i}"
                 )
@@ -716,7 +716,7 @@ def show_stage_7():
                     for asset in assets_by_category[cat]:
                         display_name = ASSETS_INDICES_MAP[asset].get("display name", asset)
                         asset_weights[cat][asset] = st.number_input(
-                            f"Weight for {display_name} in {cat} (Portfolio {i+1})",
+                            f"{display_name}",
                             min_value=0.0, max_value=1.0,
                             value=default_asset_weights.get(cat, {}).get(asset, round(1.0/total_assets, 2)) if total_assets > 0 else 0.0,
                             key=f"{cat}_asset_weight_{asset}_{i}"
