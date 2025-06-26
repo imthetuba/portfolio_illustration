@@ -50,7 +50,7 @@ DRAWDOWNS_IN_INDICES_ALL_PORTFOLIOS = 'Värdefall i index (alla portföljer)'
 
 # high contrast colors
 
-HIGH_CONTRAST_COLORWAY = ["#1ABC9C", "#F06B4B", "#6A3A9C", "#E5E8EC","#30405F", "#000000"]
+HIGH_CONTRAST_COLORWAY = ["#1ABC9C", "#F06B4B", "#6A3A9C","#30405F", "#000000"]
 # default colors
 pio.templates["my_custom"] = pio.templates["simple_white"]
 pio.templates["my_custom"].layout.colorway = [ "#1ABC9C","#7E8BA7", "#30405F",  "#000000", "#6A3A9C", "#F06B4B", "#4A69F1", "#CAA8F5", "#F5B700", "#FF6F61", "#2D3047", "#493657", "#8D1919", "#F0E68C", "#FF4500", "#2E8B57", "#4682B4", "#D2691E", "#8B008B"]
