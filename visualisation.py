@@ -85,7 +85,11 @@ pio.templates["my_custom"].layout.legend = dict(
     xanchor="center",
     y=-0.2,
     yanchor="top"
+
 )
+
+pio.templates["my_custom"].data.scatter = [go.Scatter(line=dict(width=1.3))]
+pio.templates["my_custom"].data.scattergl = [go.Scattergl(line=dict(width=1.3))]
 pio.templates.default = "my_custom"
 
 from portfolio import ASSETS_INDICES_MAP
