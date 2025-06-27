@@ -252,23 +252,52 @@ def fetch_data_infront(tickers, index_tickers, start_date, end_date,FX_tickers=[
                 if 'date' not in fx_data.columns:
                     fx_data = fx_data.reset_index()
                                 # Create dictionaries for fast FX lookup
-                usd_fx = fx_data[fx_data['currency'] == 'USD'].set_index('date')['last'].to_dict()
-                eur_fx = fx_data[fx_data['currency'] == 'EUR'].set_index('date')['last'].to_dict()
+                # Create dictionaries for fast FX lookup with forward fill
+                def create_fx_dict_with_forward_fill(fx_data, currency_code):
+                    """
+                    Create FX dictionary with forward fill for missing dates.
+                    Uses the last available FX rate instead of defaulting to 1.
+                    """
+                    currency_data = fx_data[fx_data['currency'] == currency_code].copy()
+                    if currency_data.empty:
+                        return {}
+                    
+                    # Sort by date and forward fill missing values
+                    currency_data = currency_data.sort_values('date').set_index('date')
+                    currency_data = currency_data.reindex(
+                        pd.date_range(currency_data.index.min(), currency_data.index.max(), freq='D')
+                    ).fillna(method='ffill')
+                    
+                    return currency_data['last'].to_dict()
+
+                # Create dictionaries for fast FX lookup with forward fill
+                usd_fx = create_fx_dict_with_forward_fill(fx_data, 'USD')
+                eur_fx = create_fx_dict_with_forward_fill(fx_data, 'EUR')
+
+                # Get the last available FX rates as fallback
+                last_usd_fx = fx_data[fx_data['currency'] == 'USD']['last'].iloc[-1] if not fx_data[fx_data['currency'] == 'USD'].empty else 1
+                last_eur_fx = fx_data[fx_data['currency'] == 'EUR']['last'].iloc[-1] if not fx_data[fx_data['currency'] == 'EUR'].empty else 1
+
+                print(f"Last available USD FX rate: {last_usd_fx}")
+                print(f"Last available EUR FX rate: {last_eur_fx}")
 
                 # Function to apply FX conversion
                 def apply_fx(row):
                     if row['currency'] == 'USD':
-                        fx = usd_fx.get(row['date'], 1)
+                        fx = usd_fx.get(row['date'], last_usd_fx)  # Use last available instead of 1
                         return row['last'] * fx
                     elif row['currency'] == 'EUR':
-                        fx = eur_fx.get(row['date'], 1)
+                        fx = eur_fx.get(row['date'], last_eur_fx)  # Use last available instead of 1
                         return row['last'] * fx
                     else:
                         return row['last']
+                # Function to apply FX conversion
 
                 combined_data['last'] = combined_data.apply(apply_fx, axis=1)
                 
-                print(combined_data)
+                if 'USD' in combined_data['currency'].unique():
+                    print(combined_data)
+                    combined_data.to_csv("combined_data.csv", index=False)
 
                 st.session_state['cached_data'][cache_key] = combined_data
 
