@@ -286,8 +286,8 @@ def show_stage_2():
     start_investment = st.number_input("Start investment amount (SEK)", min_value=0, value=100000)
     st.session_state['start_investment'] = start_investment
 
-    start_date = st.date_input("Start date", datetime(2022, 1, 1))
-    end_date = st.date_input("End date", datetime.today())
+    start_date = st.date_input("Start date", datetime(2022, 1, 1), min_value=datetime(2005, 1, 1))
+    end_date = st.date_input("End date", datetime.today(), min_value=datetime(2005, 1, 1))
     st.session_state['start_date'] = start_date
     st.session_state['end_date'] = end_date
 
@@ -512,8 +512,8 @@ def show_stage_4():
     st.session_state['start_investment'] = start_investment
 
     # Start and end date
-    start_date = st.date_input("Start date", datetime(2022, 1, 1))  
-    end_date = st.date_input("End date", datetime.today())
+    start_date = st.date_input("Start date", datetime(2022, 1, 1), min_value=datetime(2005, 1, 1))  
+    end_date = st.date_input("End date", datetime.today(), min_value=datetime(2005, 1, 1))
     st.session_state['start_date'] = start_date
     st.session_state['end_date'] = end_date
 
@@ -757,8 +757,8 @@ def show_stage_7():
     st.session_state['start_investment'] = start_investment
 
     # Start and end date
-    start_date = st.date_input("Start date", datetime(2022, 1, 1))  
-    end_date = st.date_input("End date", datetime.today())
+    start_date = st.date_input("Start date", datetime(2022, 1, 1), min_value=datetime(2005, 1, 1))  
+    end_date = st.date_input("End date", datetime.today(), min_value=datetime(2005, 1, 1))
     st.session_state['start_date'] = start_date
     st.session_state['end_date'] = end_date
 
