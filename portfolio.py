@@ -7,13 +7,19 @@ def load_assets_indices_map(csv_file):
     df = pd.read_csv(csv_file)
     assets_indices_map = {}
     for _, row in df.iterrows():
+        static_value = row.get('static', False)
+        if pd.isna(static_value):
+            static_value = False
+
         assets_indices_map[row['asset']] = {
             "index": row['index'],
             "display name": row['display_name'],
             "index name": row['index_name'],
             "type": row['type'],
             "OGC ex. post": row['OGC_ex_post'],
-            "category": row['category']
+            "category": row['category'],
+            "static": static_value, 
+            "currency": row['currency']
         }
     return assets_indices_map
 
@@ -63,11 +69,61 @@ def get_categorized_indices(assets_map):
         categories[category].sort()
     return categories, display_name_to_asset_id
 
+
+def fetch_static_data(static_indices, start_date, end_date):
+    """
+    Fetch data for static indices from CSV file.
+    Returns a dictionary similar to Infront API response format.
+    """
+    try:
+        # Load the static data
+        static_df = pd.read_csv('static_indices.csv')
+        static_df['date'] = pd.to_datetime(static_df['date'])
+        
+                # Convert start_date and end_date to pandas datetime for comparison
+        start_date_pd = pd.to_datetime(start_date)
+        end_date_pd = pd.to_datetime(end_date)
+        # Filter by date range
+        static_df = static_df[
+            (static_df['date'] >= start_date_pd) & 
+            (static_df['date'] <= end_date_pd)
+        ]
+        
+        # Create dictionary similar to Infront response
+        static_history = {}
+        
+        for index_name in static_indices:
+            # Filter data for this specific index
+            # Remove "STATIC:" prefix for lookup in CSV
+            lookup_name = index_name.replace("STATIC:", "")
+            # Filter data for this specific index
+            index_data = static_df[static_df['index_name'] == lookup_name].copy()
+            
+            if not index_data.empty:
+                # Set date as index and keep only 'last' column
+                index_data = index_data.set_index('date')[['last']]
+                static_history[f"STATIC:{lookup_name}"] = index_data
+                print(f"Loaded static data for {lookup_name}")
+            else:
+                print(f"Available indices in CSV: {static_df['index_name'].unique()}")
+                st.warning(f"No static data found for {lookup_name}")
+        
+        return static_history
+        
+    except FileNotFoundError:
+        st.error("static_indices.csv file not found")
+        return {}
+    except Exception as e:
+        st.error(f"Error loading static data: {e}")
+        return {}
+
+
 def fetch_data_infront(tickers, index_tickers, start_date, end_date,FX_tickers=["WFX:USDSEK","WFX:EURSEK"]):
     
     with st.spinner("Fetching data for portfolios..."):
         try:
             
+
             if 'cached_data' not in st.session_state:
                 st.session_state['cached_data'] = {}
             # Cache combined data to avoid redundant fetching
@@ -78,34 +134,88 @@ def fetch_data_infront(tickers, index_tickers, start_date, end_date,FX_tickers=[
                 combined_data = st.session_state['cached_data'][cache_key]
 
             else:
-                history = infront.GetHistory(
-                    tickers=tickers,
-                    fields=["last"],
-                    start_date=start_date.strftime('%Y-%m-%d'),
-                    end_date=end_date.strftime('%Y-%m-%d')
-                )
-                data_frames = []
-                i = 0
-                for ticker, df in history.items():
-                    print(f"Fetching data for {ticker}")
-                    df['Type'] = 'Asset'
-                    df['Name'] = tickers[i]
-                    i += 1
-                    data_frames.append(df)
-                index_history = infront.GetHistory(
-                    tickers=index_tickers,
-                    fields=["last"],
-                    start_date=start_date.strftime('%Y-%m-%d'),
-                    end_date=end_date.strftime('%Y-%m-%d')
-                )
+                # Separate static and dynamic indices
+                static_indices = []
+                dynamic_indices = []
+                
+                for index_ticker in index_tickers:
+                    static_flag = ASSETS_INDICES_MAP.get(index_ticker, {}).get('static', False)
+                    print(f"Index: {index_ticker}, Static flag: {static_flag}")
+                    if static_flag:
+                        static_indices.append(index_ticker)
+                    else:
+                        dynamic_indices.append(index_ticker)
+
+
+                static_assets = []
+                dynamic_assets = []
+                for ticker in tickers:
+                    if ASSETS_INDICES_MAP.get(ticker, {}).get('static', False):
+                        static_assets.append(ticker)
+                    else:
+                        dynamic_assets.append(ticker)
+
+                print(f"Static assets: {static_assets}")
+                print(f"Dynamic assets: {dynamic_assets}")
+
+                # Only fetch dynamic assets from Infront
+                if dynamic_assets:
+                    history = infront.GetHistory(
+                        tickers=dynamic_assets,  # Use dynamic_assets instead of tickers
+                        fields=["last"],
+                        start_date=start_date.strftime('%Y-%m-%d'),
+                        end_date=end_date.strftime('%Y-%m-%d')
+                    )
+                    data_frames = []
+                    i = 0
+                    for ticker, df in history.items():
+                        print(f"Fetching data for {ticker}")
+                        df['Type'] = 'Asset'
+                        df['Name'] = dynamic_assets[i]
+                        i += 1
+                        data_frames.append(df)
+                else:
+                    data_frames = []
+
+                # Fetch static assets if any
+                if static_assets:
+                    static_asset_history = fetch_static_data(static_assets, start_date, end_date)
+                    for ticker, df in static_asset_history.items():
+                        df['Type'] = 'Asset'
+                        df['Name'] = ticker
+                        data_frames.append(df)
+
+
+
+                 # Fetch dynamic index data
+                index_history = {}
+                if dynamic_indices:
+                    index_history = infront.GetHistory(
+                        tickers=dynamic_indices,
+                        fields=["last"],
+                        start_date=start_date.strftime('%Y-%m-%d'),
+                        end_date=end_date.strftime('%Y-%m-%d')
+                    )
+                
+                # Fetch static index data
+                static_history = fetch_static_data(static_indices, start_date, end_date)
+                
+                # Combine dynamic and static index history
+                combined_index_history = {**index_history, **static_history}
+                
                 index_data_frames = []
                 i = 0
-                for ticker, df in index_history.items():
-                    print(f"Fetching data for {ticker}")
+                for ticker, df in combined_index_history.items():
+                    print(f"Processing index data for {ticker}")
                     df['Type'] = 'Index'
-                    df['Name'] = index_tickers[i]
-                    i += 1
+                    # Use original ticker name for static indices
+                    if ticker.startswith("STATIC:"):
+                        df['Name'] = static_indices[i - len(index_history)]
+                    else:
+                        df['Name'] = dynamic_indices[i] if i < len(dynamic_indices) else index_tickers[i]
                     index_data_frames.append(df)
+                    i += 1
+
                 asset_data = pd.concat(data_frames)
                 index_data = pd.concat(index_data_frames)
 
@@ -131,6 +241,7 @@ def fetch_data_infront(tickers, index_tickers, start_date, end_date,FX_tickers=[
                 
 
                 combined_data = pd.concat([asset_data, index_data])
+                print(combined_data)
                 
 
                 # 1. Add a 'currency' column to your df using ASSETS_INDICES_MAP

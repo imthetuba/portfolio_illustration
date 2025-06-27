@@ -1,12 +1,12 @@
-asset,index,display_name,index_name,type,OGC_ex_post,category,currency
+asset,index,display_name,index_name,type,OGC_ex_post,category,currency,static
 IFMF:SE0001904798-SEK,CBOE:MSEUEURP,ALCUR,Morningstar Europe Index PR EU,Asset,0.0135394,Alternative,
 SII:CSNRXSE,INDEX,Carnegie Small Cap Net Return,Carnegie Small Cap Net Return,Index,0.0,Equity Index,SEK
 SSF:69898,SII:CSNRXSE,Cliens Småbolag A,Carnegie Small Cap Net Return,Asset,0.0136,Equity,
 WFX:EURSEK,FX,EUR/SEK,FXK,FX,0.0,Currency,EUR
 HELF:EVLILLB,NSx:OMRXBONDALL,Evli Nordic Senior Secured Loan B,OMRX Bond All Index,Asset,0.0095,Interest Bearing,
 BATE:HVPEL,STUI:DE000SL0AXL3,HarbourVest Global Private Equity,Solactive SEK Fix Short IG Credit Index,Asset,0.01,Alternative,
-BOAM:ER11EURH,INDEX,ICE BofA 1-3 Year Euro Corporate Index,ICE BofA 1-3 Year Euro Corporate Index,Index,0.0,Interest Bearing Index,EUR
-BOAM:ER10EURH,INDEX,ICE BofA Euro Corporate Index,ICE BofA Euro Corporate Index,Index,0.0,Interest Bearing Index,EUR
+STATIC:ICE BofA Global High Yield (SEK-hedged) (HW00),INDEX,ICE BofA Global High Yield (SEK-hedged) (HW00),ICE BofA Global High Yield (SEK-hedged) (HW00),Index,0.0,Interest Bearing Index,SEK,True
+STATIC:ICE BofA Euro Corp. 1-3Y (SEK-hedged) (ER01),INDEX,ICE BofA Euro Corp. 1-3Y (SEK-hedged) (ER01),ICE BofA Euro Corp. 1-3Y (SEK-hedged) (ER01),Index,0.0,Interest Bearing Index,SEK,True
 NYFA:BILD,STUI:DE000SL0AXL3,Macquarie Global Listed Infrastructure,Solactive SEK Fix Short IG Credit Index,Asset,0.021,Alternative,
 CBOE:MSEUEURP,INDEX,Morningstar Europe Index PR EU,Morningstar Europe Index PR EU,Index,0.0,Equity Index,EUR
 MSCI:127306PSEK,INDEX,MSCI ACVVI COMM SVC INDEX 10-40(Price SEK),MSCI ACVVI COMM SVC INDEX 10-40(Price SEK),Index,0.0,Equity Index,SEK
@@ -50,3 +50,10 @@ SSF:61504,NSx:OMRXBONDALL,Swedbank Robur Obligation A,OMRX Bond All Index,Asset,
 SSF:68825,NSx:OMRXBONDALL,Swedbank Robur Räntefond Kort Plus,OMRX Bond All Index,Asset,0.0021,Interest Bearing,
 IFMF:SE0017486970-SEK,SII:SIXRX,Swedbank Robur Sverige J,SIXRX,Asset,0.0052,Equity,
 WFX:USDSEK,FX,USD/SEK,FXK,FX,0.0,Currency,USD
+STATIC:Infrastructure (USD),INDEX,Infrastructure (USD),Infrastructure (USD),Index,0.0,Alternative Index,USD,True
+STATIC:Private Equity (USD),INDEX,Private Equity (USD),Private Equity (USD),Index,0.0,Alternative Index,USD,True
+STATIC:Real Estate (USD),INDEX,Real Estate (USD),Real Estate (USD),Index,0.0,Alternative Index,USD,True
+STATIC:Private Debt (USD),INDEX,Private Debt (USD),Private Debt (USD),Index,0.0,Alternative Index,USD,True
+STATIC:HFRX Global Hedge Fund Index (USD),INDEX,HFRX Global Hedge Fund Index (USD),HFRX Global Hedge Fund Index (USD),Index,0.0,Alternative Index,USD,True
+STATIC:Swiss Re Global Cat Bond TR USD,INDEX,Swiss Re Global Cat Bond TR USD,Swiss Re Global Cat Bond TR USD,Index,0.0,Alternative Index,USD,True
+STATIC:Fastigheter - Europa - Core,INDEX,Fastigheter - Europa - Core,Fastigheter - Europa - Core,Index,0.0,Alternative Index,SEK,True
