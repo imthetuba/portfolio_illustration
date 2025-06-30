@@ -208,11 +208,7 @@ def fetch_data_infront(tickers, index_tickers, start_date, end_date,FX_tickers=[
                 for ticker, df in combined_index_history.items():
                     print(f"Processing index data for {ticker}")
                     df['Type'] = 'Index'
-                    # Use original ticker name for static indices
-                    if ticker.startswith("STATIC:"):
-                        df['Name'] = static_indices[i - len(index_history)]
-                    else:
-                        df['Name'] = dynamic_indices[i] if i < len(dynamic_indices) else index_tickers[i]
+                    df['Name'] = ticker
                     index_data_frames.append(df)
                     i += 1
 
@@ -241,8 +237,6 @@ def fetch_data_infront(tickers, index_tickers, start_date, end_date,FX_tickers=[
                 
 
                 combined_data = pd.concat([asset_data, index_data])
-                print(combined_data)
-                
 
                 # 1. Add a 'currency' column to your df using ASSETS_INDICES_MAP
                 combined_data['currency'] = combined_data['Name'].map(lambda x: ASSETS_INDICES_MAP.get(x, {}).get('currency', 'SEK'))
@@ -278,8 +272,6 @@ def fetch_data_infront(tickers, index_tickers, start_date, end_date,FX_tickers=[
                 last_usd_fx = fx_data[fx_data['currency'] == 'USD']['last'].iloc[-1] if not fx_data[fx_data['currency'] == 'USD'].empty else 1
                 last_eur_fx = fx_data[fx_data['currency'] == 'EUR']['last'].iloc[-1] if not fx_data[fx_data['currency'] == 'EUR'].empty else 1
 
-                print(f"Last available USD FX rate: {last_usd_fx}")
-                print(f"Last available EUR FX rate: {last_eur_fx}")
 
                 # Function to apply FX conversion
                 def apply_fx(row):
@@ -294,10 +286,6 @@ def fetch_data_infront(tickers, index_tickers, start_date, end_date,FX_tickers=[
                 # Function to apply FX conversion
 
                 combined_data['last'] = combined_data.apply(apply_fx, axis=1)
-                
-                if 'USD' in combined_data['currency'].unique():
-                    print(combined_data)
-                    combined_data.to_csv("combined_data.csv", index=False)
 
                 st.session_state['cached_data'][cache_key] = combined_data
 

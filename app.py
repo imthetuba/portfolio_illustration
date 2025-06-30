@@ -134,7 +134,7 @@ def show_stage_1():
         
         num = st.number_input(
             "Nr of portfolios",
-            min_value=2, max_value=4, value=2, key="None"
+            min_value=1, max_value=4, value=3, key="None"
         )
         if st.button("Multiple Custom Portfolios"):
             st.session_state['num_portfolios'] = num
@@ -155,7 +155,7 @@ def show_stage_1():
     with col6:
         num = st.number_input(
             "Nr of index portfolios",
-            min_value=2, max_value=4, value=2, key="None"
+            min_value=1, max_value=4, value=3, key="None"
         )
         if st.button("Portfolios made with indices"):
             st.session_state['num_portfolios'] = num
@@ -503,7 +503,7 @@ def show_stage_4():
             #choose specific allocation limit   
             allocation_limit = st.number_input(
                 f"Allocation limit for Portfolio {i+1} (Plus/minus %)", 
-                min_value=0, max_value=100, value=7, key=f"allocation_limit_{i}"
+                min_value=0, max_value=100, value=50, key=f"allocation_limit_{i}"
             )
 
 
@@ -748,7 +748,7 @@ def show_stage_7():
             #choose specific allocation limit   
             allocation_limit = st.number_input(
                 f"Allocation limit for Portfolio {i+1} (Plus/minus %)", 
-                min_value=0, max_value=100, value=7, key=f"allocation_limit_{i}"
+                min_value=0, max_value=100, value=50, key=f"allocation_limit_{i}"
             )
 
 

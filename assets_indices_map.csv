@@ -11,7 +11,7 @@ NYFA:BILD,STUI:DE000SL0AXL3,Macquarie Global Listed Infrastructure,Solactive SEK
 CBOE:MSEUEURP,INDEX,Morningstar Europe Index PR EU,Morningstar Europe Index PR EU,Index,0.0,Equity Index,EUR
 MSCI:127306PSEK,INDEX,MSCI ACVVI COMM SVC INDEX 10-40(Price SEK),MSCI ACVVI COMM SVC INDEX 10-40(Price SEK),Index,0.0,Equity Index,SEK
 MSCI:655045NIUSD,INDEX,MSCI ACWI Small Cap Net Index,MSCI ACWI Small Cap Net Index,Index,0.0,Equity Index,USD
-MSCI:892400NIUSD,INDEX,MSCI All Country (World Net Index USD),MSCI All Country (World Net Index USD),Index,0,Equity Index,USD
+MSCI:892400NIUSD,INDEX,MSCI All Country (World Net Index USD),MSCI All Country (World Net Index USD),Index,0,Equity Index,SEK
 MSCI:891800PUSD,INDEX,MSCI Emerging Markets,MSCI Emerging Markets,Index,0,Equity Index,USD
 MSCI:984000NIUSD,INDEX,MSCI USA Net Index,MSCI USA Net Index,Index,0.0,Equity Index,USD
 MSCI:990100NIUSD,INDEX,MSCI World Net Index,MSCI World Net Index,Index,0.0,Equity Index,USD
@@ -50,11 +50,11 @@ SSF:61504,SFI:OMRXBONDALL,Swedbank Robur Obligation A,OMRX Bond All Index,Asset,
 SSF:68825,SFI:OMRXBONDALL,Swedbank Robur Räntefond Kort Plus,OMRX Bond All Index,Asset,0.0021,Interest Bearing,
 IFMF:SE0017486970-SEK,SII:SIXRX,Swedbank Robur Sverige J,SIXRX,Asset,0.0052,Equity,
 WFX:USDSEK,FX,USD/SEK,FXK,FX,0.0,Currency,USD
-STATIC:Infrastructure (USD),INDEX,Infrastructure (USD),Infrastructure (USD),Index,0.0,Alternative Index,USD,True
-STATIC:Private Equity (USD),INDEX,Private Equity (USD),Private Equity (USD),Index,0.0,Alternative Index,USD,True
-STATIC:Real Estate (USD),INDEX,Real Estate (USD),Real Estate (USD),Index,0.0,Alternative Index,USD,True
-STATIC:Private Debt (USD),INDEX,Private Debt (USD),Private Debt (USD),Index,0.0,Alternative Index,USD,True
-STATIC:HFRX Global Hedge Fund Index (USD),INDEX,HFRX Global Hedge Fund Index (USD),HFRX Global Hedge Fund Index (USD),Index,0.0,Alternative Index,USD,True
-STATIC:Swiss Re Global Cat Bond TR USD,INDEX,Swiss Re Global Cat Bond TR USD,Swiss Re Global Cat Bond TR USD,Index,0.0,Alternative Index,USD,True
+STATIC:Infrastructure (USD),INDEX,Infrastructure (USD),Infrastructure (USD),Index,0.0,Alternative Index,SEK,True
+STATIC:Private Equity (USD),INDEX,Private Equity (USD),Private Equity (USD),Index,0.0,Alternative Index,SEK,True
+STATIC:Real Estate (USD),INDEX,Real Estate (USD),Real Estate (USD),Index,0.0,Alternative Index,SEK,True
+STATIC:Private Debt (USD),INDEX,Private Debt (USD),Private Debt (USD),Index,0.0,Alternative Index,SEK,True
+STATIC:HFRX Global Hedge Fund Index (USD),INDEX,HFRX Global Hedge Fund Index (USD),HFRX Global Hedge Fund Index (USD),Index,0.0,Alternative Index,SEK,True
+STATIC:Swiss Re Global Cat Bond TR USD,INDEX,Swiss Re Global Cat Bond TR USD,Swiss Re Global Cat Bond TR USD,Index,0.0,Alternative Index,SEK,True
 STATIC:Fastigheter - Europa - Core,INDEX,Fastigheter - Europa - Core,Fastigheter - Europa - Core,Index,0.0,Alternative Index,SEK,True
-STATIC:Barclay Hedge Fund Index (USD),INDEX,Barclay Hedge Fund Index (USD),Barclay Hedge Fund Index (USD),Index,0.0,Alternative Index,USD,True
+STATIC:Barclay Hedge Fund Index (USD),INDEX,Barclay Hedge Fund Index (USD),Barclay Hedge Fund Index (USD),Index,0.0,Alternative Index,SEK,True

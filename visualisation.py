@@ -236,6 +236,49 @@ def calculate_drawdowns(data, column, window=500):
     data['Drawdown'] = (data[column] - data['Max']) / data['Max']
     return data
 
+def calculate_rolling_avg_returns(data, value_column='Total Holdings', date_column='Date', years=None):
+    """
+    Calculate rolling average of returns with an adjusted time window.
+    
+    Parameters:
+    - data: DataFrame with date and value columns
+    - value_column: Column name containing the values (default 'Total Holdings')
+    - date_column: Column name containing dates (default 'Date')
+    - years: Number of years for rolling window (if None, auto-calculated as 1/5 of total period)
+    
+    Returns:
+    - pandas Series with rolling average returns, indexed by date
+    """
+    df = data.copy()
+    df[date_column] = pd.to_datetime(df[date_column])
+    df = df.sort_values(date_column).set_index(date_column)
+    
+    # Calculate period returns
+    returns = df[value_column].pct_change().dropna()
+    
+    if len(returns) == 0:
+        return pd.Series(dtype=float)
+    
+    # Calculate time window
+    n_years = (returns.index.max() - returns.index.min()).days / 365.25
+    
+    if years is None:
+        # Auto-calculate: use 1/5 of total period, minimum 1 year
+        use_years = max(1, int(n_years // 5))
+    else:
+        use_years = years
+    
+    # Calculate periods per year based on data frequency
+    periods_per_year = int(round(len(returns) / n_years)) if n_years > 0 else 1
+    
+    # Calculate window size
+    window = max(1, int(use_years * periods_per_year))
+    
+    # Calculate rolling average
+    rolling_avg_returns = returns.rolling(window=window, min_periods=window).mean().dropna()
+    
+    return rolling_avg_returns
+
 def show_weights(weights, key=None):
     """
     Display a pie chart of asset weights using Plotly and Streamlit.
@@ -732,7 +775,7 @@ def generate_summary_report(combined_data, date_holdings_df, start_investment, a
     st.write(date_holdings_df)
     # Export report to Excel
     
-    export_report_to_excel(combined_data, date_holdings_df, start_investment, allocation_limit, weights, sharpe_ratio, stdev)
+    export_report_to_excel(combined_data, date_holdings_df, fig_drawdowns, start_investment, allocation_limit, weights, sharpe_ratio, stdev)
 
 
 def generate_multi_summary_report(finished_portfolios, allocation_limit):
@@ -845,7 +888,37 @@ def generate_multi_summary_report(finished_portfolios, allocation_limit):
     for name, data in finished_portfolios.items():
         st.subheader(f"Portfolio Data: {name}")
         st.write(data["combined_data"])
-    # export report to Excel
+    # Show the date vs total holdings data for each portfolio
+            # Show the date vs total holdings data for each portfolio
+    for name, data in finished_portfolios.items():
+        df = data["date_holdings_df"].copy()
+        
+        # Calculate drawdowns for each Type separately (Asset and Index)
+        df_with_drawdowns = df.groupby('Type', group_keys=False).apply(
+            lambda x: calculate_drawdowns(x, 'Total Holdings')
+        ).reset_index(drop=True)
+        
+        # Add rolling average returns column
+        df_with_drawdowns['Rolling Avg Return'] = None
+        
+        for type_name in df['Type'].unique():
+            type_mask = df_with_drawdowns['Type'] == type_name
+            type_data = df_with_drawdowns[type_mask]
+            
+            if not type_data.empty:
+                rolling_returns = calculate_rolling_avg_returns(
+                    type_data, 
+                    value_column='Total Holdings', 
+                    date_column='Date'
+                )
+                
+                # Map rolling returns back to the main DataFrame
+                for date, value in rolling_returns.items():
+                    date_mask = (df_with_drawdowns['Date'] == date) & (df_with_drawdowns['Type'] == type_name)
+                    df_with_drawdowns.loc[date_mask, 'Rolling Avg Return'] = value
+        
+        st.subheader(f"Date vs Total Holdings, Drawdowns and Rolling Avg Returns: {name}")
+        st.write(df_with_drawdowns)
 
     export_multi_port_to_excel(finished_portfolios)
 
@@ -970,5 +1043,36 @@ def generate_multi_summary_report_indices(finished_portfolios, allocation_limit)
     for name, data in finished_portfolios.items():
         st.subheader(f"Portfolio Data: {name}")
         st.write(data["combined_data"])
+            # Show the date vs total holdings data for each portfolio
+    for name, data in finished_portfolios.items():
+        df = data["date_holdings_df"].copy()
+        
+        # Calculate drawdowns for each Type separately (Asset and Index)
+        df_with_drawdowns = df.groupby('Type', group_keys=False).apply(
+            lambda x: calculate_drawdowns(x, 'Total Holdings')
+        ).reset_index(drop=True)
+        
+        # Add rolling average returns column
+        df_with_drawdowns['Rolling Avg Return'] = None
+        
+        for type_name in df['Type'].unique():
+            type_mask = df_with_drawdowns['Type'] == type_name
+            type_data = df_with_drawdowns[type_mask]
+            
+            if not type_data.empty:
+                rolling_returns = calculate_rolling_avg_returns(
+                    type_data, 
+                    value_column='Total Holdings', 
+                    date_column='Date'
+                )
+                
+                # Map rolling returns back to the main DataFrame
+                for date, value in rolling_returns.items():
+                    date_mask = (df_with_drawdowns['Date'] == date) & (df_with_drawdowns['Type'] == type_name)
+                    df_with_drawdowns.loc[date_mask, 'Rolling Avg Return'] = value
+        
+        st.subheader(f"Date vs Total Holdings, Drawdowns and Rolling Avg Returns: {name}")
+        st.write(df_with_drawdowns)
+
     # export report to Excel
     export_multi_port_to_excel(finished_portfolios)
