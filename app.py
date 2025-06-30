@@ -160,7 +160,7 @@ def show_stage_1():
         if st.button("Portfolios made with indices"):
             st.session_state['num_portfolios'] = num
             st.session_state['use_default'] = True
-            st.session_state['portfolio_file'] = None
+            st.session_state['portfolio_file'] = "preset_3_indices.csv"
             st.session_state['multiple_portfolios'] = True
             st.session_state['page'] = 7
             st.rerun()
