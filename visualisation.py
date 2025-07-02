@@ -661,7 +661,7 @@ def plot_multi_portfolio_rolling_average_returns(finished_portfolios, years=None
 def generate_summary_report(combined_data, date_holdings_df, start_investment, allocation_limit, weights, asset_weights, period):
 
     """
-    Generate a summary report for the portfolio.
+    Generate a summary report for the portfolio. Old verison (since we are not only looking at one portfolio most times)
     """
     st.header("Summary Report")
 
@@ -884,12 +884,13 @@ def generate_multi_summary_report(finished_portfolios, allocation_limit):
         combined_data = data["combined_data"]
         combined_data['Name'] = combined_data['Name'].map(lambda x: ASSETS_INDICES_MAP[x]["display name"] if x in ASSETS_INDICES_MAP else x)
         data["combined_data"] = combined_data
-    # Show the portfolio data for each portfolio
+    # Chnage the display names in the combined data
     for name, data in finished_portfolios.items():
-        st.subheader(f"Portfolio Data: {name}")
-        st.write(data["combined_data"])
-    # Show the date vs total holdings data for each portfolio
-            # Show the date vs total holdings data for each portfolio
+        combined_data = data["combined_data"]
+        combined_data['Name'] = combined_data['Name'].map(lambda x: ASSETS_INDICES_MAP[x]["display name"] if x in ASSETS_INDICES_MAP else x)
+        data["combined_data"] = combined_data
+   
+   
     for name, data in finished_portfolios.items():
         df = data["date_holdings_df"].copy()
         
@@ -916,9 +917,22 @@ def generate_multi_summary_report(finished_portfolios, allocation_limit):
                 for date, value in rolling_returns.items():
                     date_mask = (df_with_drawdowns['Date'] == date) & (df_with_drawdowns['Type'] == type_name)
                     df_with_drawdowns.loc[date_mask, 'Rolling Avg Return'] = value
+
+        # Add indexed return (rebased to 100 at the first available value for each Type)
+        for type_name in df['Type'].unique():
+            type_mask = df_with_drawdowns['Type'] == type_name
+            type_data = df_with_drawdowns[type_mask].sort_values('Date')
+            if not type_data.empty:
+                first_value = type_data['Total Holdings'].iloc[0]
+                if first_value != 0:
+                    indexed_return = (type_data['Total Holdings'] / first_value) * 100
+                    df_with_drawdowns.loc[type_mask, 'Indexed Return (100)'] = indexed_return.values
+                else:
+                    df_with_drawdowns.loc[type_mask, 'Indexed Return (100)'] = np.nan
         
-        st.subheader(f"Date vs Total Holdings, Drawdowns and Rolling Avg Returns: {name}")
+        st.subheader(f"Date vs Total Holdings, Drawdowns, Indexed return Rolling Avg Returns: {name}")
         st.write(df_with_drawdowns)
+
 
     export_multi_port_to_excel(finished_portfolios)
 
@@ -1039,11 +1053,8 @@ def generate_multi_summary_report_indices(finished_portfolios, allocation_limit)
         combined_data = data["combined_data"]
         combined_data['Name'] = combined_data['Name'].map(lambda x: ASSETS_INDICES_MAP[x]["display name"] if x in ASSETS_INDICES_MAP else x)
         data["combined_data"] = combined_data
-    # Show the portfolio data for each portfolio
-    for name, data in finished_portfolios.items():
-        st.subheader(f"Portfolio Data: {name}")
-        st.write(data["combined_data"])
-            # Show the date vs total holdings data for each portfolio
+   
+   
     for name, data in finished_portfolios.items():
         df = data["date_holdings_df"].copy()
         
@@ -1070,8 +1081,20 @@ def generate_multi_summary_report_indices(finished_portfolios, allocation_limit)
                 for date, value in rolling_returns.items():
                     date_mask = (df_with_drawdowns['Date'] == date) & (df_with_drawdowns['Type'] == type_name)
                     df_with_drawdowns.loc[date_mask, 'Rolling Avg Return'] = value
+
+        # Add indexed return (rebased to 100 at the first available value for each Type)
+        for type_name in df['Type'].unique():
+            type_mask = df_with_drawdowns['Type'] == type_name
+            type_data = df_with_drawdowns[type_mask].sort_values('Date')
+            if not type_data.empty:
+                first_value = type_data['Total Holdings'].iloc[0]
+                if first_value != 0:
+                    indexed_return = (type_data['Total Holdings'] / first_value) * 100
+                    df_with_drawdowns.loc[type_mask, 'Indexed Return (100)'] = indexed_return.values
+                else:
+                    df_with_drawdowns.loc[type_mask, 'Indexed Return (100)'] = np.nan
         
-        st.subheader(f"Date vs Total Holdings, Drawdowns and Rolling Avg Returns: {name}")
+        st.subheader(f"Date vs Total Holdings, Drawdowns, Indexed return Rolling Avg Returns: {name}")
         st.write(df_with_drawdowns)
 
     # export report to Excel

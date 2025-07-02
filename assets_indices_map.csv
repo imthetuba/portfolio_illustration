@@ -1,60 +1,60 @@
 asset,index,display_name,index_name,type,OGC_ex_post,category,currency,static
-IFMF:SE0001904798-SEK,CBOE:MSEUEURP,ALCUR,Morningstar Europe Index PR EU,Asset,0.0135394,Alternative,
-SII:CSNRXSE,INDEX,Carnegie Small Cap Net Return,Carnegie Small Cap Net Return,Index,0.0,Equity Index,SEK
-SSF:69898,SII:CSNRXSE,Cliens Småbolag A,Carnegie Small Cap Net Return,Asset,0.0136,Equity,
-WFX:EURSEK,FX,EUR/SEK,FXK,FX,0.0,Currency,EUR
-HELF:EVLILLB,SFI:OMRXBONDALL,Evli Nordic Senior Secured Loan B,OMRX Bond All Index,Asset,0.0095,Interest Bearing,
-BATE:HVPEL,STUI:DE000SL0AXL3,HarbourVest Global Private Equity,Solactive SEK Fix Short IG Credit Index,Asset,0.01,Alternative,
-STATIC:ICE BofA Global High Yield (SEK-hedged) (HW00),INDEX,ICE BofA Global High Yield (SEK-hedged) (HW00),ICE BofA Global High Yield (SEK-hedged) (HW00),Index,0.0,Interest Bearing Index,SEK,True
+STATIC:Barclay Hedge Fund Index (USD),INDEX,Barclay Hedge Fund Index (USD),Barclay Hedge Fund Index (USD),Index,0.0,Alternative Index,SEK,True
+SII:CSNRXSE,INDEX,Carnegie Small Cap Net Return,Carnegie Small Cap Net Return,Index,0.0,Equity Index,SEK,
+WFX:EURSEK,FX,EUR/SEK,FXK,FX,0.0,Currency,EUR,
+STATIC:Fastigheter - Europa - Core,INDEX,Fastigheter - Europa - Core,Fastigheter - Europa - Core,Index,0.0,Alternative Index,SEK,True
+STATIC:HFRX Global Hedge Fund Index (USD),INDEX,HFRX Global Hedge Fund Index (USD),HFRX Global Hedge Fund Index (USD),Index,0.0,Alternative Index,SEK,True
 STATIC:ICE BofA Euro Corp. 1-3Y (SEK-hedged) (ER01),INDEX,ICE BofA Euro Corp. 1-3Y (SEK-hedged) (ER01),ICE BofA Euro Corp. 1-3Y (SEK-hedged) (ER01),Index,0.0,Interest Bearing Index,SEK,True
-NYFA:BILD,STUI:DE000SL0AXL3,Macquarie Global Listed Infrastructure,Solactive SEK Fix Short IG Credit Index,Asset,0.021,Alternative,
-CBOE:MSEUEURP,INDEX,Morningstar Europe Index PR EU,Morningstar Europe Index PR EU,Index,0.0,Equity Index,EUR
-MSCI:127306PSEK,INDEX,MSCI ACVVI COMM SVC INDEX 10-40(Price SEK),MSCI ACVVI COMM SVC INDEX 10-40(Price SEK),Index,0.0,Equity Index,SEK
-MSCI:655045NIUSD,INDEX,MSCI ACWI Small Cap Net Index,MSCI ACWI Small Cap Net Index,Index,0.0,Equity Index,USD
-MSCI:892400NIUSD,INDEX,MSCI All Country (World Net Index USD),MSCI All Country (World Net Index USD),Index,0,Equity Index,SEK
-MSCI:891800PUSD,INDEX,MSCI Emerging Markets,MSCI Emerging Markets,Index,0,Equity Index,USD
-MSCI:984000NIUSD,INDEX,MSCI USA Net Index,MSCI USA Net Index,Index,0.0,Equity Index,USD
-MSCI:990100NIUSD,INDEX,MSCI World Net Index,MSCI World Net Index,Index,0.0,Equity Index,USD
-MSCI:106230NIUSD,INDEX,MSCI World Small Cap Net Index,MSCI World Small Cap Net Index,Index,0.0,Equity Index,USD
-STOI:NOMXSCSEGI,INDEX,Nasdaq OMX Small Cap Sweden GI,Nasdaq OMX Small Cap Sweden GI,Index,0.0,Equity Index,SEK
-IFMF:FI4000439468-SEK,SFI:OMRXBONDALL,Nordea Institutionella Sm IA,OMRX Bond All Index,Asset,0.0025024,Interest Bearing,
-SSF:63982,NSx:OMRXREAL,Nordea Realräntefond,OMRX Real Return Bond Index,Asset,0.005,Interest Bearing,
-SFI:OMRXBONDALL,INDEX,OMRX Bond All Index,OMRX Bond All Index,Index,0.0,Interest Bearing Index,SEK
-NSx:OMRXREAL,INDEX,OMRX Real Return Bond Index,OMRX Real Return Bond Index,Index,0.0,Interest Bearing Index,SEK
-NSx:OMRXTOT,INDEX,OMRX Total Market Index,OMRX Total Market Index,Index,0.0,Equity Index,SEK
-SFI:OMRXTBILL,INDEX,OMRX Treasury Bill Index,OMRX Treasury Bill Index,Index,0.0,Interest Bearing Index,SEK
-IFMF:LU1646476504-SEK,STUI:DE000SL0AXL3,SCOR ILS Atropos Catb B3 SEK,Solactive SEK Fix Short IG Credit Index,Asset,0.005,Alternative,
-SSF:71452,SFI:OMRXBONDALL,SEB Företagsobligatlonsfond A,OMRX Bond All Index,Asset,0.007,Interest Bearing,
-SSF:66605,MSCI:127306PSEK,SEB Global High Yield Fund C (H-SEK),MSCI ACVVI COMM SVC INDEX 10-40(Price SEK),Asset,0.010591,Interest Bearing,
-SSF:72483,SFI:OMRXBONDALL,SEB Global High Yield IC,OMRX Bond All Index,Asset,0.005,Interest Bearing,
-SSF:70778,MSCI:892400NIUSD,SEB Global Indexnära C,MSCI All Country (World Net Index USD),Asset,0.004,Equity,
-SSF:61705,SFI:OMRXBONDALL,SEB Kortrantefond SEK A,OMRX Bond All Index,Asset,0.002,Interest Bearing,
-SSF:62768,SFI:OMRXBONDALL,SEB Obligationsfond SEK,OMRX Bond All Index,Asset,0.004,Interest Bearing,
-SSF:70060,NSx:OMRXREAL,SEB Realräntefond SEK Lux,OMRX Real Return Bond Index,Asset,0.008,Interest Bearing,
-SSF:60055,SII:CSNRXSE,SEB Sverigefond Småbolag Chans/Risk A,Carnegie Small Cap Net Return,Asset,0.015,Equity,
-SII:SIXRX,INDEX,SIX Return Index,SIXRX,Index,0.0,Equity Index,SEK
-STUI:DE000SL0AXL3,INDEX,Solactive SEK Fix Short IG Credit Index,Solactive SEK Fix Short IG Credit Index,Index,0.0,Alternative Index,SEK
-STUI:DE000SL0AXG3,INDEX,Solactive SEK FRN IG Credit Index,Solactive SEK FRN IG Credit Index,Index,0.0,Alternative Index,SEK
-SSF:69694,MSCI:891800PUSD,Storebrand Emerging Markets Plus A,MSCI Emerging Markets Net Index,Asset,0.007,Equity,
-SSF:62022,MSCI:127306PSEK,Storebrand Global All Countries A SEK,MSCI ACVVI COMM SVC INDEX 10-40(Price SEK),Asset,0.0031366,Equity,
-SSF:68700,MSCI:127306PSEK,Storebrand Global Low Volatility A SEK,MSCI ACVVI COMM SVC INDEX 10-40(Price SEK),Asset,0.007,Equity,
-SSF:69692,MSCI:127306PSEK,Storebrand Global Plus A SEK,MSCI ACVVI COMM SVC INDEX 10-40(Price SEK),Asset,0.0040903,Equity,
-SSF:61535,SII:SIXRX,Storebrand Sverige A SEK,SIXRX,Asset,0.0020731,Equity,
-SSF:69876,SII:SIXRX,Storebrand Sverige Plus A SEK,SIXRX,Asset,0.0030915,Equity,
-SSF:69347,CBOE:MSEUEURP,Swedbank Robur Access Europa A,Morningstar Europe Index PR EU,Asset,0.002,Equity,
-SSF:69346,SII:SIXRX,Swedbank Robur Access Sverige A,SIXRX,Asset,0.002,Equity,
-IFMF:SE0007074083-SEK,MSCI:984000NIUSD,Swedbank Robur Access USA A,MSCI USA Net Index,Asset,0.002,Equity,
-SSF:68824,SFI:OMRXBONDALL,Swedbank Robur Corporate Bond Europe A,OMRX Bond All Index,Asset,0.006,Interest Bearing,
-SSF:70834,MSCI:892400NIUSD,Swedbank Robur Global Impact A,MSCI All Country (World Net Index USD),Asset,0.0071,Equity,
-SSF:61504,SFI:OMRXBONDALL,Swedbank Robur Obligation A,OMRX Bond All Index,Asset,0.003,Interest Bearing,
-SSF:68825,SFI:OMRXBONDALL,Swedbank Robur Räntefond Kort Plus,OMRX Bond All Index,Asset,0.0021,Interest Bearing,
-IFMF:SE0017486970-SEK,SII:SIXRX,Swedbank Robur Sverige J,SIXRX,Asset,0.0052,Equity,
-WFX:USDSEK,FX,USD/SEK,FXK,FX,0.0,Currency,USD
+STATIC:ICE BofA Global High Yield (SEK-hedged) (HW00),INDEX,ICE BofA Global High Yield (SEK-hedged) (HW00),ICE BofA Global High Yield (SEK-hedged) (HW00),Index,0.0,Interest Bearing Index,SEK,True
 STATIC:Infrastructure (USD),INDEX,Infrastructure (USD),Infrastructure (USD),Index,0.0,Alternative Index,SEK,True
+CBOE:MSEUEURP,INDEX,Morningstar Europe Index PR EU,Morningstar Europe Index PR EU,Index,0.0,Equity Index,EUR,
+MSCI:127306PSEK,INDEX,MSCI ACVVI COMM SVC INDEX 10-40(Price SEK),MSCI ACVVI COMM SVC INDEX 10-40(Price SEK),Index,0.0,Equity Index,SEK,
+MSCI:655045NIUSD,INDEX,MSCI ACWI Small Cap Net Index,MSCI ACWI Small Cap Net Index,Index,0.0,Equity Index,USD,
+MSCI:892400NIUSD,INDEX,MSCI All Country (World Net Index USD),MSCI All Country (World Net Index USD),Index,0.0,Equity Index,SEK,
+MSCI:891800PUSD,INDEX,MSCI Emerging Markets,MSCI Emerging Markets,Index,0.0,Equity Index,USD,
+MSCI:984000NIUSD,INDEX,MSCI USA Net Index,MSCI USA Net Index,Index,0.0,Equity Index,USD,
+MSCI:990100NIUSD,INDEX,MSCI World Net Index,MSCI World Net Index,Index,0.0,Equity Index,USD,
+MSCI:106230NIUSD,INDEX,MSCI World Small Cap Net Index,MSCI World Small Cap Net Index,Index,0.0,Equity Index,USD,
+STOI:NOMXSCSEGI,INDEX,Nasdaq OMX Small Cap Sweden GI,Nasdaq OMX Small Cap Sweden GI,Index,0.0,Equity Index,SEK,
+SFI:OMRXBONDALL,INDEX,OMRX Bond All Index,OMRX Bond All Index,Index,0.0,Interest Bearing Index,SEK,
+NSx:OMRXREAL,INDEX,OMRX Real Return Bond Index,OMRX Real Return Bond Index,Index,0.0,Interest Bearing Index,SEK,
+NSx:OMRXTOT,INDEX,OMRX Total Market Index,OMRX Total Market Index,Index,0.0,Equity Index,SEK,
+SFI:OMRXTBILL,INDEX,OMRX Treasury Bill Index,OMRX Treasury Bill Index,Index,0.0,Interest Bearing Index,SEK,
+STATIC:Private Debt (USD),INDEX,Private Debt (USD),Private Debt (USD),Index,0.0,Alternative Index,SEK,True
 STATIC:Private Equity (USD),INDEX,Private Equity (USD),Private Equity (USD),Index,0.0,Alternative Index,SEK,True
 STATIC:Real Estate (USD),INDEX,Real Estate (USD),Real Estate (USD),Index,0.0,Alternative Index,SEK,True
-STATIC:Private Debt (USD),INDEX,Private Debt (USD),Private Debt (USD),Index,0.0,Alternative Index,SEK,True
-STATIC:HFRX Global Hedge Fund Index (USD),INDEX,HFRX Global Hedge Fund Index (USD),HFRX Global Hedge Fund Index (USD),Index,0.0,Alternative Index,SEK,True
+SII:SIXRX,INDEX,SIX Return Index,SIXRX,Index,0.0,Equity Index,SEK,
+STUI:DE000SL0AXL3,INDEX,Solactive SEK Fix Short IG Credit Index,Solactive SEK Fix Short IG Credit Index,Index,0.0,Alternative Index,SEK,
+STUI:DE000SL0AXG3,INDEX,Solactive SEK FRN IG Credit Index,Solactive SEK FRN IG Credit Index,Index,0.0,Alternative Index,SEK,
 STATIC:Swiss Re Global Cat Bond TR USD,INDEX,Swiss Re Global Cat Bond TR USD,Swiss Re Global Cat Bond TR USD,Index,0.0,Alternative Index,SEK,True
-STATIC:Fastigheter - Europa - Core,INDEX,Fastigheter - Europa - Core,Fastigheter - Europa - Core,Index,0.0,Alternative Index,SEK,True
-STATIC:Barclay Hedge Fund Index (USD),INDEX,Barclay Hedge Fund Index (USD),Barclay Hedge Fund Index (USD),Index,0.0,Alternative Index,SEK,True
+WFX:USDSEK,FX,USD/SEK,FXK,FX,0.0,Currency,USD,
+IFMF:SE0001904798-SEK,CBOE:MSEUEURP,ALCUR,Morningstar Europe Index PR EU,Asset,0.0135394,Alternative,,
+SSF:69898,SII:CSNRXSE,Cliens Småbolag A,Carnegie Small Cap Net Return,Asset,0.0136,Equity,,
+HELF:EVLILLB,SFI:OMRXBONDALL,Evli Nordic Senior Secured Loan B,OMRX Bond All Index,Asset,0.0095,Interest Bearing,,
+BATE:HVPEL,STUI:DE000SL0AXL3,HarbourVest Global Private Equity,Solactive SEK Fix Short IG Credit Index,Asset,0.01,Alternative,,
+NYFA:BILD,STUI:DE000SL0AXL3,Macquarie Global Listed Infrastructure,Solactive SEK Fix Short IG Credit Index,Asset,0.021,Alternative,,
+IFMF:FI4000439468-SEK,SFI:OMRXBONDALL,Nordea Institutionella Sm IA,OMRX Bond All Index,Asset,0.0025024,Interest Bearing,,
+SSF:63982,NSx:OMRXREAL,Nordea Realräntefond,OMRX Real Return Bond Index,Asset,0.005,Interest Bearing,,
+IFMF:LU1646476504-SEK,STUI:DE000SL0AXL3,SCOR ILS Atropos Catb B3 SEK,Solactive SEK Fix Short IG Credit Index,Asset,0.005,Alternative,,
+SSF:71452,SFI:OMRXBONDALL,SEB Företagsobligatlonsfond A,OMRX Bond All Index,Asset,0.007,Interest Bearing,,
+SSF:66605,MSCI:127306PSEK,SEB Global High Yield Fund C (H-SEK),MSCI ACVVI COMM SVC INDEX 10-40(Price SEK),Asset,0.010591,Interest Bearing,,
+SSF:72483,SFI:OMRXBONDALL,SEB Global High Yield IC,OMRX Bond All Index,Asset,0.005,Interest Bearing,,
+SSF:70778,MSCI:892400NIUSD,SEB Global Indexnära C,MSCI All Country (World Net Index USD),Asset,0.004,Equity,,
+SSF:61705,SFI:OMRXBONDALL,SEB Kortrantefond SEK A,OMRX Bond All Index,Asset,0.002,Interest Bearing,,
+SSF:62768,SFI:OMRXBONDALL,SEB Obligationsfond SEK,OMRX Bond All Index,Asset,0.004,Interest Bearing,,
+SSF:70060,NSx:OMRXREAL,SEB Realräntefond SEK Lux,OMRX Real Return Bond Index,Asset,0.008,Interest Bearing,,
+SSF:60055,SII:CSNRXSE,SEB Sverigefond Småbolag Chans/Risk A,Carnegie Small Cap Net Return,Asset,0.015,Equity,,
+SSF:69694,MSCI:891800PUSD,Storebrand Emerging Markets Plus A,MSCI Emerging Markets Net Index,Asset,0.007,Equity,,
+SSF:62022,MSCI:127306PSEK,Storebrand Global All Countries A SEK,MSCI ACVVI COMM SVC INDEX 10-40(Price SEK),Asset,0.0031366,Equity,,
+SSF:68700,MSCI:127306PSEK,Storebrand Global Low Volatility A SEK,MSCI ACVVI COMM SVC INDEX 10-40(Price SEK),Asset,0.007,Equity,,
+SSF:69692,MSCI:127306PSEK,Storebrand Global Plus A SEK,MSCI ACVVI COMM SVC INDEX 10-40(Price SEK),Asset,0.0040903,Equity,,
+SSF:61535,SII:SIXRX,Storebrand Sverige A SEK,SIXRX,Asset,0.0020731,Equity,,
+SSF:69876,SII:SIXRX,Storebrand Sverige Plus A SEK,SIXRX,Asset,0.0030915,Equity,,
+SSF:69347,CBOE:MSEUEURP,Swedbank Robur Access Europa A,Morningstar Europe Index PR EU,Asset,0.002,Equity,,
+SSF:69346,SII:SIXRX,Swedbank Robur Access Sverige A,SIXRX,Asset,0.002,Equity,,
+IFMF:SE0007074083-SEK,MSCI:984000NIUSD,Swedbank Robur Access USA A,MSCI USA Net Index,Asset,0.002,Equity,,
+SSF:68824,SFI:OMRXBONDALL,Swedbank Robur Corporate Bond Europe A,OMRX Bond All Index,Asset,0.006,Interest Bearing,,
+SSF:70834,MSCI:892400NIUSD,Swedbank Robur Global Impact A,MSCI All Country (World Net Index USD),Asset,0.0071,Equity,,
+SSF:61504,SFI:OMRXBONDALL,Swedbank Robur Obligation A,OMRX Bond All Index,Asset,0.003,Interest Bearing,,
+SSF:68825,SFI:OMRXBONDALL,Swedbank Robur Räntefond Kort Plus,OMRX Bond All Index,Asset,0.0021,Interest Bearing,,
+IFMF:SE0017486970-SEK,SII:SIXRX,Swedbank Robur Sverige J,SIXRX,Asset,0.0052,Equity,,

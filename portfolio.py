@@ -239,14 +239,20 @@ def fetch_data_infront(tickers, index_tickers, start_date, end_date,FX_tickers=[
                 combined_data = pd.concat([asset_data, index_data])
 
                 # 1. Add a 'currency' column to your df using ASSETS_INDICES_MAP
-                combined_data['currency'] = combined_data['Name'].map(lambda x: ASSETS_INDICES_MAP.get(x, {}).get('currency', 'SEK'))
-                # If 'date' is not a column, reset index
+                combined_data['currency'] = combined_data['Name'].map(
+                    lambda x: ASSETS_INDICES_MAP.get(x, {}).get('currency', 'SEK')
+                )
+
+                # Fix the SettingWithCopyWarning by being more explicit
                 if 'date' not in combined_data.columns:
                     combined_data = combined_data.reset_index()
                 if 'date' not in fx_data.columns:
                     fx_data = fx_data.reset_index()
-                                # Create dictionaries for fast FX lookup
-                # Create dictionaries for fast FX lookup with forward fill
+
+                # Make sure we're working with copies to avoid warnings
+                combined_data = combined_data.copy()
+                fx_data = fx_data.copy()
+
                 def create_fx_dict_with_forward_fill(fx_data, currency_code):
                     """
                     Create FX dictionary with forward fill for missing dates.
@@ -260,7 +266,7 @@ def fetch_data_infront(tickers, index_tickers, start_date, end_date,FX_tickers=[
                     currency_data = currency_data.sort_values('date').set_index('date')
                     currency_data = currency_data.reindex(
                         pd.date_range(currency_data.index.min(), currency_data.index.max(), freq='D')
-                    ).fillna(method='ffill')
+                    ).ffill()  # Use .ffill() instead of fillna(method='ffill')
                     
                     return currency_data['last'].to_dict()
 
@@ -336,7 +342,7 @@ def clean_data(combined_data,data_frequency, is_multiple_portfolio=False):
     most_common_diff = date_diffs.mode()[0]
     st.write(f"Most common date difference: {most_common_diff}")
 
-    if most_common_diff.days > 20 or is_multiple_portfolio:
+    if most_common_diff.days > 20:
         st.info("Detected monthly data.")
         period = 12
         # Keep only the last day of each month for each asset/index
@@ -451,9 +457,23 @@ def reallocate_holdings_at_breach(combined_data, weights, date_holdings_df):
     return combined_data, date_holdings_df
 
 def create_portfolio(combined_data, weights, start_investment, allocation_limit):
-
-    combined_data['Weight'] = combined_data.apply(lambda row: weights[row['Name']], axis=1)
+    # Debug: Print available names and weights keys
+    available_names = combined_data['Name'].unique()
+    weight_keys = list(weights.keys())
+    
+    print(f"Available names in data: {available_names}")
+    print(f"Weight keys: {weight_keys}")
+    
+    # Find missing keys
+    missing_keys = set(available_names) - set(weight_keys)
+    if missing_keys:
+        # Filter out rows with missing weights, since these have been set to 0
+        combined_data = combined_data[combined_data['Name'].isin(weight_keys)].copy()
+    
+    # Now safely apply weights
+    combined_data['Weight'] = combined_data['Name'].map(weights)
     combined_data['Holdings'] = combined_data['Weight'] * start_investment
+    
     
     # Calculate the adjusted holdings using cumulative product
     def calculate_adjusted_holdings(group):
