@@ -69,6 +69,7 @@ def get_categorized_indices(assets_map):
         categories[category].sort()
     return categories, display_name_to_asset_id
 
+# Add this function to portfolio.py:
 
 def fetch_static_data(static_indices, start_date, end_date):
     """
@@ -302,35 +303,80 @@ def fetch_data_infront(tickers, index_tickers, start_date, end_date,FX_tickers=[
         except Exception as e:
             raise RuntimeError(f"Error fetching data: {e}")
 
-def clean_data(combined_data,data_frequency, is_multiple_portfolio=False):
+def fill_missing_dates(combined_data, data_frequency):
+    """
+    Fill missing dates in the data series with the last valid value.
+    This ensures consistent time series for calculations that depend on series length.
+    """
+    # Process each asset/index separately
+    filled_data_frames = []
+    
+    for name in combined_data['Name'].unique():
+        asset_data = combined_data[combined_data['Name'] == name].copy()
+        asset_data = asset_data.sort_values('date')
+        
+        # Create complete date range
+        start_date = asset_data['date'].min()
+        end_date = asset_data['date'].max()
+        
+        if data_frequency == "monthly":
+            # For monthly data, use month-end dates (ME instead of deprecated M)
+            complete_dates = pd.date_range(start=start_date, end=end_date, freq='ME')
+        elif data_frequency == "yearly":
+            complete_dates = pd.date_range(start=start_date, end=end_date, freq='YE')
+        else:
+            complete_dates = pd.date_range(start=start_date, end=end_date, freq='D')
+        
+        # Set date as index for reindexing
+        asset_data = asset_data.set_index('date')
+        
+        # Reindex to complete date range and forward fill missing values
+        asset_data = asset_data.reindex(complete_dates).ffill()
+        
+        # Reset index to get date back as column
+        asset_data = asset_data.reset_index()
+        
+        # Fix the column naming issue - just rename the index column to 'date'
+        if asset_data.columns[0] == 'index':
+            asset_data = asset_data.rename(columns={'index': 'date'})
+        
+        # Make sure Name is filled for new rows
+        asset_data['Name'] = name
+        
+        filled_data_frames.append(asset_data)
+        
+        # Debug info
+        original_count = len(combined_data[combined_data['Name'] == name])
+        filled_count = len(asset_data)
+    
+    return pd.concat(filled_data_frames, ignore_index=True)
+
+def clean_data(combined_data, data_frequency, is_multiple_portfolio=False):
     if 'date' not in combined_data.columns:
         combined_data = combined_data.reset_index()
 
     # Convert to datetime if not already
     combined_data['date'] = pd.to_datetime(combined_data['date'])
-
-
+    
     # Find the earliest date for each asset/index
     earliest_dates = combined_data.groupby('Name')['date'].min()
+    # Find the asset/index with the earliest last available date
+    last_dates = combined_data.groupby('Name')['date'].max()
+    limiting_asset_last = last_dates.idxmin()
+    limiting_date_last = last_dates.min()
+    display_name_last = ASSETS_INDICES_MAP.get(limiting_asset_last, {}).get("display name", limiting_asset_last)
+    st.write(f"Asset/index with earliest last available date: **{display_name_last}** (last available date: {limiting_date_last.date()})")
     limiting_asset = earliest_dates.idxmax()
     limiting_date = earliest_dates.max()
     # Map asset id to display name if possible
     display_name = ASSETS_INDICES_MAP.get(limiting_asset, {}).get("display name", limiting_asset)
     st.write(f"Limiting asset/index: **{display_name}** (earliest available date: {limiting_date.date()})")
-    # Show all earliest dates for reference, with display names
-    earliest_dates_df = earliest_dates.reset_index().rename(columns={'date': 'Earliest Date', 'Name': 'Asset ID'})
-    earliest_dates_df['Display Name'] = earliest_dates_df['Asset ID'].map(lambda aid: ASSETS_INDICES_MAP.get(aid, {}).get("display name", aid))
 
 
-
-    common_dates = combined_data.groupby('Name')['date'].apply(set).agg(lambda x: set.intersection(*x))
-    common_dates = pd.DataFrame(list(common_dates), columns=['date'])
-    combined_data = combined_data[combined_data['date'].isin(common_dates['date'])]
     
-    # Convert to datetime if not already
-    combined_data['date'] = pd.to_datetime(combined_data['date'])
     # Sort by date
     combined_data = combined_data.sort_values('date')
+    
     # Calculate the most common date difference per asset/index
     date_diffs = (
         combined_data
@@ -340,39 +386,44 @@ def clean_data(combined_data,data_frequency, is_multiple_portfolio=False):
         .dropna()
     )
     most_common_diff = date_diffs.mode()[0]
-    st.write(f"Most common date difference: {most_common_diff}")
 
-    if most_common_diff.days > 20:
-        st.info("Detected monthly data.")
+    # Determine frequency and period
+    if most_common_diff.days > 20 or data_frequency == "monthly":
+        if most_common_diff.days > 20:
+            st.info("Detected monthly data.")
+        else:
+            st.info("Chosen monthly data.")
+            st.session_state['data_frequency'] = "monthly"
+        
         period = 12
-        # Keep only the last day of each month for each asset/index
-        combined_data['year'] = combined_data['date'].dt.year
-        combined_data['month'] = combined_data['date'].dt.month
-        combined_data = combined_data.sort_values('date').groupby(['Name', 'year', 'month']).tail(1)
-        combined_data = combined_data.drop(columns=['year', 'month'])
         data_frequency = "monthly"
-    elif data_frequency == "monthly":
-        st.info("Chosen monthly data.")
-        st.session_state['data_frequency'] = "monthly"
-        period = 12
-
+        
         # Keep only the last day of each month for each asset/index
         combined_data['year'] = combined_data['date'].dt.year
         combined_data['month'] = combined_data['date'].dt.month
         combined_data = combined_data.sort_values('date').groupby(['Name', 'year', 'month']).tail(1)
         combined_data = combined_data.drop(columns=['year', 'month'])
+        
     elif most_common_diff.days > 5:
         st.info("Detected weekly data.")
         period = 52
-
-    elif most_common_diff.days > 300 or data_frequency == "Yearly":
+    elif most_common_diff.days > 300 or data_frequency == "yearly":
         st.info("Detected yearly data.")
         period = 1
     else:
         st.info("Detected daily data.")
         period = 252
 
+    # Fill missing dates BEFORE filtering to common dates
+    combined_data = fill_missing_dates(combined_data, data_frequency)
+    
+    # NOW filter to common dates (after filling)
+    common_dates = combined_data.groupby('Name')['date'].apply(set).agg(lambda x: set.intersection(*x))
+    common_dates = pd.DataFrame(list(common_dates), columns=['date'])
+    combined_data = combined_data[combined_data['date'].isin(common_dates['date'])]
+    
     return combined_data, period, data_frequency
+
 
 def indexed_net_to_100(combined_data):
     combined_data['Period Net Return'] = combined_data.groupby('Name')['last'].transform(lambda x: (x / x.iloc[0]) - 1)

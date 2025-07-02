@@ -823,17 +823,28 @@ def show_stage_4():
                         help=f"Rebalancing trigger for Portfolio {i+1}"
                     )
 
+
+
     # Common settings at the bottom
     st.markdown("---")
     st.markdown("### Common Settings")
     
     col1, col2 = st.columns(2)
     with col1:
-        start_investment = st.number_input("Start investment amount (SEK)", min_value=0, value=100000)
-        st.session_state['start_investment'] = start_investment
         
         start_date = st.date_input("Start date", datetime(2022, 1, 1), min_value=datetime(2005, 1, 1))
         st.session_state['start_date'] = start_date
+
+        
+        start_investment = st.number_input("Start investment amount (SEK)", min_value=0, value=100000)
+        st.session_state['start_investment'] = start_investment
+
+        rolling_average_period = st.number_input(
+            "Rolling average period (years)", 
+            min_value=1, max_value=5, value=3, 
+            help="Period for rolling average calculations"
+        )
+        st.session_state['rolling_average_period'] = rolling_average_period
         
     with col2:
         end_date = st.date_input("End date", datetime.today(), min_value=datetime(2005, 1, 1))
@@ -873,6 +884,7 @@ def show_stage_5():
     end_date = st.session_state.get('end_date', datetime.today())
     start_investment = st.session_state.get('start_investment', 100000)
     data_frequency = st.session_state.get('data_frequency', "daily")
+    rolling_average_period = st.session_state.get('rolling_average_period', 12)
     
     if not portfolios:
         st.warning("No portfolios selected. Please go back and select portfolios.")
@@ -922,7 +934,7 @@ def show_stage_5():
         #generate_summary_report(combined_data, date_holdings_df, start_investment, allocation_limit, weights, asset_only_weights, period)
 
     # Generate multi-portfolio summary report
-    generate_multi_summary_report(finished_portfolios, allocation_limit)
+    generate_multi_summary_report(finished_portfolios, allocation_limit,rolling_average_period)
     st.markdown("---")
     if st.button("Back"):
         st.session_state['page'] = 1
@@ -1208,11 +1220,17 @@ def show_stage_7():
     
     col1, col2 = st.columns(2)
     with col1:
-        start_investment = st.number_input("Start investment amount (SEK)", min_value=0, value=100000)
-        st.session_state['start_investment'] = start_investment
-        
         start_date = st.date_input("Start date", datetime(2022, 1, 1), min_value=datetime(2005, 1, 1))
         st.session_state['start_date'] = start_date
+
+        start_investment = st.number_input("Start investment amount (SEK)", min_value=0, value=100000)
+        st.session_state['start_investment'] = start_investment
+
+        rolling_average_period = st.number_input(
+            "Rolling average time period (years)", min_value=1, max_value=10, value=3, step=1
+        )
+        st.session_state['rolling_average_period'] = rolling_average_period
+        
         
     with col2:
         end_date = st.date_input("End date", datetime.today(), min_value=datetime(2005, 1, 1))
@@ -1250,6 +1268,7 @@ def show_stage_8():
     end_date = st.session_state.get('end_date', datetime.today())
     start_investment = st.session_state.get('start_investment', 100000)
     data_frequency = st.session_state.get('data_frequency', "daily")
+    rolling_average_period = st.session_state.get('rolling_average_period', 12)
     
     if not portfolios:
         st.warning("No portfolios selected. Please go back and select portfolios.")
@@ -1304,7 +1323,7 @@ def show_stage_8():
         #generate_summary_report(combined_data, date_holdings_df, start_investment, allocation_limit, weights, asset_only_weights, period)
 
     # Generate multi-portfolio summary report
-    generate_multi_summary_report_indices(finished_portfolios, allocation_limit)
+    generate_multi_summary_report_indices(finished_portfolios, allocation_limit, rolling_average_period)
     st.markdown("---")
     if st.button("Back"):
         st.session_state['page'] = 1

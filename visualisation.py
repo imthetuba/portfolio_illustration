@@ -264,6 +264,7 @@ def calculate_rolling_avg_returns(data, value_column='Total Holdings', date_colu
     
     if years is None:
         # Auto-calculate: use 1/5 of total period, minimum 1 year
+        print("YEARS ARE NONE")
         use_years = max(1, int(n_years // 5))
     else:
         use_years = years
@@ -361,7 +362,17 @@ def calculate_annualized_return(returns, period):
     """
     Calculate the annualized return for a given series of returns.
     """
-    return (1 + returns).prod() ** (period / len(returns)) - 1
+    cumulative_returns = (1 + returns).cumprod()
+    final_indexed_value = cumulative_returns.iloc[-1] * 100
+    
+    # Calculate annualized return 
+    length_of_series = len(returns)
+    if length_of_series > 0:
+        annualized_return = (final_indexed_value / 100) ** (period / length_of_series) - 1
+    else:
+        annualized_return = 0
+    
+    return annualized_return
 
 def calculate_maximum_drawdown(returns):
     """
@@ -623,30 +634,35 @@ def plot_rolling_average_returns_vs_index(date_holdings_df, years=None, date_col
     )
     return fig
 
-def plot_multi_portfolio_rolling_average_returns(finished_portfolios, years=None, date_col='Date'):
+def plot_multi_portfolio_rolling_average_returns(finished_portfolios, years=3, date_col='Date'):
     """
     Plot rolling average of returns for multiple portfolios.
     """
     fig = go.Figure()
     for name, data in finished_portfolios.items():
         df = data["date_holdings_df"].copy()
-        df[date_col] = pd.to_datetime(df[date_col])
-        df = df.sort_values(date_col)
-        asset_df = df[df['Type'] == 'Asset'].set_index(date_col)
-        returns = asset_df['Total Holdings'].pct_change().dropna()
-
-        n_years = (returns.index.max() - returns.index.min()).days / 365.25
-        use_years = years if years is not None else max(1, int(n_years // 5))
-        periods_per_year = int(round(len(returns) / n_years)) if n_years > 0 else 1
-        window = max(1, int(use_years * periods_per_year))
-
-        rolling = returns.rolling(window=window, min_periods=window).mean().dropna()
-        fig.add_trace(go.Scatter(
-            x=rolling.index,
-            y=rolling,
-            mode='lines',
-            name=f"{name} ({use_years}y avg)"
-        ))
+        # Filter for assets only
+        assets_df = df[df['Type'] == 'Asset']
+        
+        # Use the existing calculate_rolling_avg_returns function
+        rolling_returns = calculate_rolling_avg_returns(
+            assets_df, 
+            value_column='Total Holdings', 
+            date_column=date_col, 
+            years=years
+        )
+        
+        if not rolling_returns.empty:
+            # Determine the years used for display
+            df_temp = assets_df.copy()
+            df_temp[date_col] = pd.to_datetime(df_temp[date_col])
+            
+            fig.add_trace(go.Scatter(
+                x=rolling_returns.index,
+                y=rolling_returns,
+                mode='lines',
+                name=f"{name} ({years}y avg)"
+            ))
 
     fig.update_layout(
         title=ROLLING_AVG_RETURN,
@@ -656,7 +672,6 @@ def plot_multi_portfolio_rolling_average_returns(finished_portfolios, years=None
         colorway=HIGH_CONTRAST_COLORWAY,
     )
     return fig
-
 
 def generate_summary_report(combined_data, date_holdings_df, start_investment, allocation_limit, weights, asset_weights, period):
 
@@ -778,7 +793,7 @@ def generate_summary_report(combined_data, date_holdings_df, start_investment, a
     export_report_to_excel(combined_data, date_holdings_df, fig_drawdowns, start_investment, allocation_limit, weights, sharpe_ratio, stdev)
 
 
-def generate_multi_summary_report(finished_portfolios, allocation_limit):
+def generate_multi_summary_report(finished_portfolios, allocation_limit,rolling_avg_period=12):
     """
     Display a summary report comparing multiple portfolios.
     finished_portfolios: dict of {portfolio_name: {combined_data, date_holdings_df, weights, asset_only_weights, period}}
@@ -840,7 +855,7 @@ def generate_multi_summary_report(finished_portfolios, allocation_limit):
     st.plotly_chart(fig_portfolio)
 
     st.subheader("Rolling Average of Returns Comparison")
-    fig_rolling_multi = plot_multi_portfolio_rolling_average_returns(finished_portfolios)
+    fig_rolling_multi = plot_multi_portfolio_rolling_average_returns(finished_portfolios, years=rolling_avg_period)
     st.plotly_chart(fig_rolling_multi)
 
     # Plot drawdowns for all portfolios
@@ -910,7 +925,8 @@ def generate_multi_summary_report(finished_portfolios, allocation_limit):
                 rolling_returns = calculate_rolling_avg_returns(
                     type_data, 
                     value_column='Total Holdings', 
-                    date_column='Date'
+                    date_column='Date',
+                    years=rolling_avg_period
                 )
                 
                 # Map rolling returns back to the main DataFrame
@@ -975,7 +991,7 @@ def show_predictions(combined_data, data_frequency):
         st.line_chart(simulations_df)
         st.success("Simulation complete!")
 
-def generate_multi_summary_report_indices(finished_portfolios, allocation_limit):
+def generate_multi_summary_report_indices(finished_portfolios, allocation_limit,rolling_avg_period=12):
     """
     Display a summary report comparing multiple portfolios.
     finished_portfolios: dict of {portfolio_name: {combined_data, date_holdings_df, weights, asset_only_weights, period}}
@@ -1030,7 +1046,7 @@ def generate_multi_summary_report_indices(finished_portfolios, allocation_limit)
     st.plotly_chart(fig_portfolio)
 
     st.subheader("Rolling Average of Returns Comparison")
-    fig_rolling_multi = plot_multi_portfolio_rolling_average_returns(finished_portfolios)
+    fig_rolling_multi = plot_multi_portfolio_rolling_average_returns(finished_portfolios,years=rolling_avg_period)
     st.plotly_chart(fig_rolling_multi)
 
     # Plot drawdowns for all portfolios
@@ -1074,7 +1090,8 @@ def generate_multi_summary_report_indices(finished_portfolios, allocation_limit)
                 rolling_returns = calculate_rolling_avg_returns(
                     type_data, 
                     value_column='Total Holdings', 
-                    date_column='Date'
+                    date_column='Date',
+                    years=rolling_avg_period
                 )
                 
                 # Map rolling returns back to the main DataFrame
