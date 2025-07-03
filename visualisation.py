@@ -298,47 +298,6 @@ def show_weights(weights, key=None):
     fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
     st.plotly_chart(fig, key=key)
 
-def plot_drawdowns(portfolio_data, index_data, window=500):
-    """
-    Plot drawdowns for the portfolio and the index.
-    """
-    # Calculate drawdowns
-    portfolio_data = calculate_drawdowns(portfolio_data, 'Total Holdings', window)
-    index_data = calculate_drawdowns(index_data, 'Total Holdings', window)
-
-    
-    # Create a DataFrame for plotting
-    drawdown_data = pd.DataFrame({
-        'Date': portfolio_data['Date'],
-        'Portfolio Drawdown': portfolio_data['Drawdown']
-    })
-
-    index_drawdown_data = pd.DataFrame({
-        'Date': index_data['Date'],
-        'Index Drawdown': index_data['Drawdown']
-    })
-
-    # Merge the two DataFrames on the 'Date' column
-    drawdown_data = pd.merge(drawdown_data, index_drawdown_data, on='Date', how='outer')
-
-    # Melt the DataFrame for Plotly
-    drawdown_data = drawdown_data.melt(id_vars=['Date'], var_name='Type', value_name='Drawdown')
-
-    # Filter out non-date values
-    drawdown_data = drawdown_data.dropna(subset=['Date'])
-
-    # Create the plot
-    fig = px.line(drawdown_data, x='Date', y='Drawdown', color='Type', title=DRAWDOWN_PORTFOLIO_VS_INDEX)
-
-    # Update layout for better visualization
-    fig.update_layout(
-        xaxis_title=DATE,
-        yaxis_title=DRAWDOWN,
-        legend_title=TYPE
-    )
-    fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
-
-    return fig
 
 def calculate_sharpe_ratio(returns,period, risk_free_rate=RISK_FREE_RATE ):
     """
@@ -405,7 +364,6 @@ def calculate_alpha(returns_with_dates,index_returns_with_dates):
     alpha = returns_total - b * index_returns_total
     return alpha
 
-
 def calculate_beta(returns_with_dates, index_returns_with_dates):
     """
     Calculate the beta of a portfolio against a benchmark index. Returns and index returns should be aligned.
@@ -419,31 +377,6 @@ def calculate_beta(returns_with_dates, index_returns_with_dates):
     variance = np.var(index_returns)
     beta = covariance / variance if variance != 0 else 0
     return beta
-
-def export_report_to_excel(combined_data, date_holdings_df, start_investment, allocation_limit, weights, sharpe_ratio, std_dev):
-    output = io.BytesIO()
-    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-        # Write key metrics to a sheet
-        metrics_df = pd.DataFrame({
-            "Metric": ["Start Investment Amount", "Allocation Limit", "Sharpe Ratio", "Standard Deviation"],
-            "Value": [f"{start_investment} SEK", f"{allocation_limit}%", f"{sharpe_ratio:.2f}", f"{std_dev:.2f}"]
-        })
-        metrics_df.to_excel(writer, sheet_name='Key Metrics', index=False)
-        # Write asset weights to a sheet
-        weights_df = pd.DataFrame(list(weights.items()), columns=['Asset', 'Weight'])
-        weights_df['Display Name'] = weights_df['Asset'].apply(lambda x: ASSETS_INDICES_MAP[x].get("display name", x))
-        weights_df.to_excel(writer, sheet_name='Asset Weights', index=False)
-        # Write portfolio data to a sheet
-        combined_data.to_excel(writer, sheet_name='Portfolio Data', index=False)
-        # Write date vs total holdings data to a sheet
-        date_holdings_df.to_excel(writer, sheet_name='Date vs Total Holdings Data', index=False)
-    output.seek(0)
-    st.download_button(
-        label="Download Summary Report Excel",
-        data=output,
-        file_name="summary_report.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
 
 
 def export_multi_port_to_excel(finished_portfolios):
@@ -673,124 +606,6 @@ def plot_multi_portfolio_rolling_average_returns(finished_portfolios, years=3, d
     )
     return fig
 
-def generate_summary_report(combined_data, date_holdings_df, start_investment, allocation_limit, weights, asset_weights, period):
-
-    """
-    Generate a summary report for the portfolio. Old verison (since we are not only looking at one portfolio most times)
-    """
-    st.header("Summary Report")
-
-    st.write("This report provides a summary of the portfolio's performance, including key metrics, asset weights, and visualizations.")
-    st.write("The portfolio returns are adjusted for ongoing charges (OGC) and the allocation limit is set to " + str(allocation_limit) + "%.")
-    st.write("The portfolio is rebalanced when allocation breaches the allocation limit for any position. This means that all the overflow of assets (or index holdings if the breach is in the index) are sold and the proceeds are used to buy the other assets in the portfolio such that they amount to the normal \% holdings specified.")
-
-    risk_free_rate = fetch_risk_free_rate(date_holdings_df['Date'].max(), date_holdings_df['Date'].min())
-    st.subheader("Key Metrics")
-    st.write("This section provides key metrics for the portfolio. Variance and Sharpe Ratio are calculated based on the portfolio returns after ongoing charge (OGC).")
-    st.write("The Sharpe Ratio is a measure of risk-adjusted return, while variance indicates the volatility of the portfolio.")
-    st.write("The Sharpe Ratio is calculated using T-Bills as the risk-free rate. Alpha and Beta are calculated against the index returns. Alpha indicates the excess return of the portfolio compared to the index, while Beta measures the sensitivity of the portfolio's returns to the index's returns.")
-    st.write("Period value " + str(period) + " is used to annualize the returns and volatility.")
-    portfolio_returns = date_holdings_df[date_holdings_df['Type'] == 'Asset']["Period Return"].dropna()
-    index_returns_with_dates = date_holdings_df.loc[date_holdings_df['Type'] == 'Index', ['Date', 'Period Return']].copy()
-    index_returns_with_dates = index_returns_with_dates.set_index('Date')["Period Return"].dropna()
-    returns_with_dates = date_holdings_df.loc[date_holdings_df['Type'] == 'Asset', ['Date', 'Period Return']].copy()
-    returns_with_dates = returns_with_dates.set_index('Date')["Period Return"].dropna()
-    sharpe_ratio = calculate_sharpe_ratio(returns_with_dates, period, risk_free_rate)
-    variance = calculate_variance(portfolio_returns, period)
-    max_drawdown = calculate_maximum_drawdown(portfolio_returns)
-    stdev = calculate_stdev(portfolio_returns, period)
-    annualized_return = calculate_annualized_return(portfolio_returns, period)
-    final_holdings = date_holdings_df[date_holdings_df['Type'] == 'Asset']['Total Holdings'].iloc[-1]
-    total_return = (final_holdings - start_investment) / start_investment
-    total_return_index = (date_holdings_df[date_holdings_df['Type'] == 'Index']['Total Holdings'].iloc[-1] - start_investment) / start_investment
-    stdev_index = calculate_stdev(date_holdings_df[date_holdings_df['Type'] == 'Index']["Period Return"].dropna(), period)
-    alpha = calculate_alpha(returns_with_dates, index_returns_with_dates)
-    beta = calculate_beta(returns_with_dates, index_returns_with_dates)
-
-    metrics_df = pd.DataFrame({
-        "Metric": [
-            
-            "Allocation Limit",
-            "Sharpe Ratio",
-            "Alpha",
-            "Beta",
-            "Standard Deviation",
-            "Standard Deviation (Index)",
-            "Variance",
-            "Max Drawdown",
-            "Annualized Return",
-            "Start Investment Amount",
-            "Final Holdings",
-            "Total Return",
-            "Total Return (Index)"
-
-        ],
-        "Value": [
-            
-            f"{allocation_limit}%",
-            f"{sharpe_ratio:.2f}",
-            f"{alpha:.2f}",
-            f"{beta:.2f}",
-            f"{stdev * 100:.2f}%",
-            f"{stdev_index * 100:.2f}%",
-            f"{variance * 100:.2f}%",
-            f"{max_drawdown * 100:.2f}%",
-            f"{annualized_return * 100:.2f}%",
-            f"{start_investment} SEK",
-            f"{final_holdings:.2f} SEK",
-            f"{total_return:.2%}",
-            f"{total_return_index:.2%}"
-        ]
-    })
-    st.table(metrics_df)
-
-
-    # Show weights pie chart
-    st.subheader("Asset Allocation")     
-    show_weights(asset_weights, key="asset_only")
-
-    # Show the index weights
-    st.subheader("Index allocation")
-    index_only_weights = {k: v for k, v in weights.items() if k not in asset_weights}
-    show_weights(index_only_weights, key="index_only")
-
-
-    # Plot the holdings
-    st.subheader("Holdings Over Time")
-    fig_holdings = plot_holdings(combined_data)
-    st.plotly_chart(fig_holdings)
-
-    # Plot the date vs total holdings
-    st.subheader("Total Holdings Over Time")
-    fig_total_holdings = plot_date_vs_total_holdings(date_holdings_df)
-    st.plotly_chart(fig_total_holdings)
-
-    # Plot rolling average
-    st.subheader("Rolling Average of Returns (Portfolio vs Index)")
-    fig_rolling = plot_rolling_average_returns_vs_index(date_holdings_df)
-    st.plotly_chart(fig_rolling)
-    
-
-    # Plot the drawdowns
-    st.subheader("Drawdowns")
-    index_data = date_holdings_df[date_holdings_df['Type'] == 'Index']
-    portfolio_data = date_holdings_df[date_holdings_df['Type'] == 'Asset']
-    fig_drawdowns = plot_drawdowns(portfolio_data, index_data)
-    st.plotly_chart(fig_drawdowns)
-
-    # Replace asset IDs with display names in 'Name' column of combined_data
-    combined_data['Name'] = combined_data['Name'].map(lambda x: ASSETS_INDICES_MAP[x]["display name"] if x in ASSETS_INDICES_MAP else x)
-   
-    # Display portfolio data
-    st.subheader("Portfolio Data")
-    st.write(combined_data)
-
-    # Display date vs total holdings data
-    st.subheader("Date vs Total Holdings Data")
-    st.write(date_holdings_df)
-    # Export report to Excel
-    
-    export_report_to_excel(combined_data, date_holdings_df, fig_drawdowns, start_investment, allocation_limit, weights, sharpe_ratio, stdev)
 
 
 def generate_multi_summary_report(finished_portfolios, allocation_limit,rolling_avg_period=12):
@@ -948,8 +763,10 @@ def generate_multi_summary_report(finished_portfolios, allocation_limit,rolling_
         
         st.subheader(f"Date vs Total Holdings, Drawdowns, Indexed return Rolling Avg Returns: {name}")
         st.write(df_with_drawdowns)
+        #udate the old date vs total holdings
+        data["date_holdings_df"] = df_with_drawdowns
 
-
+    # export report to Excel
     export_multi_port_to_excel(finished_portfolios)
 
 
@@ -1070,7 +887,7 @@ def generate_multi_summary_report_indices(finished_portfolios, allocation_limit,
         combined_data['Name'] = combined_data['Name'].map(lambda x: ASSETS_INDICES_MAP[x]["display name"] if x in ASSETS_INDICES_MAP else x)
         data["combined_data"] = combined_data
    
-   
+    
     for name, data in finished_portfolios.items():
         df = data["date_holdings_df"].copy()
         
@@ -1113,6 +930,9 @@ def generate_multi_summary_report_indices(finished_portfolios, allocation_limit,
         
         st.subheader(f"Date vs Total Holdings, Drawdowns, Indexed return Rolling Avg Returns: {name}")
         st.write(df_with_drawdowns)
+
+        #udate the old date vs total holdings
+        data["date_holdings_df"] = df_with_drawdowns
 
     # export report to Excel
     export_multi_port_to_excel(finished_portfolios)

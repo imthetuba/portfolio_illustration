@@ -1,6 +1,6 @@
 portfolio,category,category_weight,display_name,asset_id,asset_weight
 1,Equity Index,0.65,SIX Return Index,SII:SIXRX,0.88
-1,Equity Index,0.65,MSCI All Country (World Net Index USD),MSCI:892400NIUSD,0.12
+1,Equity Index,0.65,MSCI WORLD TR (Net Index USD),MSCI:990100NIUSD,0.12
 1,Interest Bearing Index,0.2,OMRX Treasury Bill Index,SFI:OMRXTBILL,0.25
 1,Interest Bearing Index,0.2,OMRX Bond All Index,SFI:OMRXBONDALL,0.25
 1,Interest Bearing Index,0.2,ICE BofA Euro Corp. 1-3Y (SEK-hedged) (ER01),STATIC:ICE BofA Euro Corp. 1-3Y (SEK-hedged) (ER01),0.5
@@ -8,7 +8,7 @@ portfolio,category,category_weight,display_name,asset_id,asset_weight
 1,Alternative Index,0.15,Barclay Hedge Fund Index (USD),STATIC:Barclay Hedge Fund Index (USD),0.5
 
 2,Equity Index,0.60,SIX Return Index,SII:SIXRX,0.20
-2,Equity Index,0.60,MSCI All Country (World Net Index USD),MSCI:892400NIUSD,0.80
+2,Equity Index,0.60,MSCI WORLD TR (Net Index USD),MSCI:990100NIUSD,0.80
 2,Interest Bearing Index,0.25,OMRX Treasury Bill Index,SFI:OMRXTBILL,0.25
 2,Interest Bearing Index,0.25,OMRX Bond All Index,SFI:OMRXBONDALL,0.25
 2,Interest Bearing Index,0.25,ICE BofA Euro Corp. 1-3Y (SEK-hedged) (ER01),STATIC:ICE BofA Euro Corp. 1-3Y (SEK-hedged) (ER01),0.5
@@ -19,7 +19,7 @@ portfolio,category,category_weight,display_name,asset_id,asset_weight
 
 
 3,Equity Index,0.60,SIX Return Index,SII:SIXRX,0.20
-3,Equity Index,0.60,MSCI All Country (World Net Index USD),MSCI:892400NIUSD,0.80
+3,Equity Index,0.60,MSCI WORLD TR (Net Index USD),MSCI:990100NIUSD,0.80
 3,Interest Bearing Index,0.25,OMRX Treasury Bill Index,SFI:OMRXTBILL,0.25
 3,Interest Bearing Index,0.25,OMRX Bond All Index,SFI:OMRXBONDALL,0.25
 3,Interest Bearing Index,0.25,ICE BofA Euro Corp. 1-3Y (SEK-hedged) (ER01),STATIC:ICE BofA Euro Corp. 1-3Y (SEK-hedged) (ER01),0.5

@@ -19,7 +19,8 @@ def load_assets_indices_map(csv_file):
             "OGC ex. post": row['OGC_ex_post'],
             "category": row['category'],
             "static": static_value, 
-            "currency": row['currency']
+            "currency": row['currency'],
+            "history_since": row['history_since'] 
         }
     return assets_indices_map
 
@@ -47,7 +48,7 @@ def get_categorized_assets(assets_map):
     categories = {"Equity": [], "Alternative": [], "Interest Bearing": []}
     display_name_to_asset_id = {}
     for asset, attributes in assets_map.items():
-        if attributes["type"] != "Index":
+        if attributes['type'] != "Index":
             category = attributes.get("category", "Uncategorized")
             if category in categories:
                 categories[category].append(attributes["display name"])
@@ -135,6 +136,10 @@ def fetch_data_infront(tickers, index_tickers, start_date, end_date,FX_tickers=[
                 combined_data = st.session_state['cached_data'][cache_key]
 
             else:
+                
+                # Create mapping to preserve original tickers
+                original_ticker_map = {}
+
                 # Separate static and dynamic indices
                 static_indices = []
                 dynamic_indices = []
@@ -146,6 +151,7 @@ def fetch_data_infront(tickers, index_tickers, start_date, end_date,FX_tickers=[
                         static_indices.append(index_ticker)
                     else:
                         dynamic_indices.append(index_ticker)
+                        original_ticker_map[index_ticker] = index_ticker
 
 
                 static_assets = []
@@ -155,6 +161,8 @@ def fetch_data_infront(tickers, index_tickers, start_date, end_date,FX_tickers=[
                         static_assets.append(ticker)
                     else:
                         dynamic_assets.append(ticker)
+                        # Store mapping between API ticker and original ticker
+                        original_ticker_map[ticker] = ticker
 
                 print(f"Static assets: {static_assets}")
                 print(f"Dynamic assets: {dynamic_assets}")
@@ -209,7 +217,7 @@ def fetch_data_infront(tickers, index_tickers, start_date, end_date,FX_tickers=[
                 for ticker, df in combined_index_history.items():
                     print(f"Processing index data for {ticker}")
                     df['Type'] = 'Index'
-                    df['Name'] = ticker
+                    df['Name'] = dynamic_indices[i] if i < len(dynamic_indices) else ticker
                     index_data_frames.append(df)
                     i += 1
 
@@ -365,12 +373,12 @@ def clean_data(combined_data, data_frequency, is_multiple_portfolio=False):
     limiting_asset_last = last_dates.idxmin()
     limiting_date_last = last_dates.min()
     display_name_last = ASSETS_INDICES_MAP.get(limiting_asset_last, {}).get("display name", limiting_asset_last)
-    st.write(f"Asset/index with earliest last available date: **{display_name_last}** (last available date: {limiting_date_last.date()})")
+    # st.write(f"Asset/index with earliest last available date: **{display_name_last}** (last available date: {limiting_date_last.date()})")
     limiting_asset = earliest_dates.idxmax()
     limiting_date = earliest_dates.max()
     # Map asset id to display name if possible
     display_name = ASSETS_INDICES_MAP.get(limiting_asset, {}).get("display name", limiting_asset)
-    st.write(f"Limiting asset/index: **{display_name}** (earliest available date: {limiting_date.date()})")
+    # st.write(f"Limiting asset/index: **{display_name}** (earliest available date: {limiting_date.date()})")
 
 
     
@@ -514,7 +522,11 @@ def create_portfolio(combined_data, weights, start_investment, allocation_limit)
     
     print(f"Available names in data: {available_names}")
     print(f"Weight keys: {weight_keys}")
-    
+
+    # Copy dataframe to avoid SettingWithCopyWarning
+    combined_data = combined_data.copy()
+
+
     # Find missing keys
     missing_keys = set(available_names) - set(weight_keys)
     if missing_keys:
@@ -537,6 +549,7 @@ def create_portfolio(combined_data, weights, start_investment, allocation_limit)
     
     # Calculate the total holdings for each date and asset or index
     date_holdings_map = combined_data.groupby(['date', 'Type'])['Holdings'].sum().unstack().to_dict()
+
 
     
     # Calculate the adjusted weights
