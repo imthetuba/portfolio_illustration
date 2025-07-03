@@ -11,6 +11,7 @@ CBOE:MSEUEURP,INDEX,Morningstar Europe Index PR EU,Morningstar Europe Index PR E
 MSCI:127306PSEK,INDEX,MSCI ACVVI COMM SVC INDEX 10-40(Price SEK),MSCI ACVVI COMM SVC INDEX 10-40(Price SEK),Index,0.0,Equity Index,SEK,,2011-02-03
 MSCI:655045NIUSD,INDEX,MSCI ACWI Small Cap Net Index,MSCI ACWI Small Cap Net Index,Index,0.0,Equity Index,USD,,2011-02-03
 MSCI:990100NIUSD,INDEX,MSCI WORLD TR (Net Index USD),MSCI WORLD TR (Net Index USD),Index,0.0,Equity Index,USD,,1994-05-31
+MSCI:144485PUSD,INDEX,MSCI World All Cap (Net Index USD),MSCI World All Cap (Net Index USD),Index,0.0,Equity Index,USD,,2007-11-30
 MSCI:891800PUSD,INDEX,MSCI Emerging Markets,MSCI Emerging Markets,Index,0.0,Equity Index,USD,,2004-01-30
 MSCI:984000NIUSD,INDEX,MSCI USA Net Index,MSCI USA Net Index,Index,0.0,Equity Index,USD,,1994-05-31
 MSCI:106230NIUSD,INDEX,MSCI World Small Cap Net Index,MSCI World Small Cap Net Index,Index,0.0,Equity Index,USD,,2005-01-03
@@ -23,6 +24,7 @@ STATIC:Private Debt (USD),INDEX,Private Debt (USD),Private Debt (USD),Index,0.0,
 STATIC:Private Equity (USD),INDEX,Private Equity (USD),Private Equity (USD),Index,0.0,Alternative Index,SEK,TRUE,2007-12-31
 STATIC:Real Estate (USD),INDEX,Real Estate (USD),Real Estate (USD),Index,0.0,Alternative Index,SEK,TRUE,2007-12-31
 SII:SIXRX,INDEX,SIX Return Index,SIX Return Index,Index,0.0,Equity Index,SEK,,1979-12-28
+SII:SIXPRX,INDEX,SIX Portfolio Return Index,SIX Portfolio Return Index,Index,0.0,Equity Index,SEK,,1992-12-30
 STUI:DE000SL0AXL3,INDEX,Solactive SEK Fix Short IG Credit Index,Solactive SEK Fix Short IG Credit Index,Index,0.0,Alternative Index,SEK,,2020-05-14
 STUI:DE000SL0AXG3,INDEX,Solactive SEK FRN IG Credit Index,Solactive SEK FRN IG Credit Index,Index,0.0,Alternative Index,SEK,,2020-05-07
 STATIC:Swiss Re Global Cat Bond TR USD,INDEX,Swiss Re Global Cat Bond TR USD,Swiss Re Global Cat Bond TR USD,Index,0.0,Alternative Index,SEK,TRUE,2007-12-31
