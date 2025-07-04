@@ -527,11 +527,11 @@ def show_stage_4():
     col1, col2 = st.columns(2)
     with col1:
         
-        start_date = st.date_input("Start date", datetime(2022, 1, 1), min_value=datetime(2005, 1, 1))
+        start_date = st.date_input("Start date", datetime(2022, 1, 1), min_value=datetime(1970, 1, 1))
         st.session_state['start_date'] = start_date
 
         
-        start_investment = st.number_input("Start investment amount (SEK)", min_value=0, value=100000)
+        start_investment = st.number_input("Start investment amount (SEK)", min_value=0, value=1000000)
         st.session_state['start_investment'] = start_investment
 
         rolling_average_period = st.number_input(
@@ -572,7 +572,6 @@ def show_stage_4():
 
 def show_stage_5():
     st.logo("logo.png")
-    st.title("Portfolio Comparison Results")
     portfolios = st.session_state.get('multi_portfolios', [])
     # allocation_limit = st.session_state.get('allocation_limit', 50)
     start_date = st.session_state.get('start_date', datetime(2022, 1, 1))
@@ -951,10 +950,10 @@ def show_stage_7():
     
     col1, col2 = st.columns(2)
     with col1:
-        start_date = st.date_input("Start date", datetime(2022, 1, 1), min_value=datetime(2005, 1, 1))
+        start_date = st.date_input("Start date", datetime(2022, 1, 1), min_value=datetime(1970, 1, 1))
         st.session_state['start_date'] = start_date
 
-        start_investment = st.number_input("Start investment amount (SEK)", min_value=0, value=100000)
+        start_investment = st.number_input("Start investment amount (SEK)", min_value=0, value=1000000)
         st.session_state['start_investment'] = start_investment
 
         rolling_average_period = st.number_input(
@@ -992,7 +991,6 @@ def show_stage_7():
 
 def show_stage_8():
     st.logo("logo.png")
-    st.title("Portfolio Comparison Results")
     portfolios = st.session_state.get('multi_portfolios', [])
     # allocation_limit = st.session_state.get('allocation_limit', 50)
     start_date = st.session_state.get('start_date', datetime(2022, 1, 1))

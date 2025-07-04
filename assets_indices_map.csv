@@ -38,7 +38,7 @@ IFMF:FI4000439468-SEK,SFI:OMRXBONDALL,Nordea Institutionella Sm IA,OMRX Bond All
 SSF:63982,NSx:OMRXREAL,Nordea Realräntefond,OMRX Real Return Bond Index,Asset,0.005,Interest Bearing,,,2003-08-25
 IFMF:LU1646476504-SEK,STUI:DE000SL0AXL3,SCOR ILS Atropos Catb B3 SEK,Solactive SEK Fix Short IG Credit Index,Asset,0.005,Alternative,,,2018-05-11
 SSF:71452,SFI:OMRXBONDALL,SEB Företagsobligatlonsfond A,OMRX Bond All Index,Asset,0.007,Interest Bearing,,,2007-05-02
-SSF:66605,MSCI:127306PSEK,SEB Global High Yield Fund C (H-SEK),MSCI ACVVI COMM SVC INDEX 10-40(Price SEK),Asset,0.010591,Interest Bearing,,,2009-02-19
+SSF:66605,MSCI:144485PUSD,SEB Global High Yield Fund C (H-SEK),MSCI World All Cap (Net Index USD),Asset,0.010591,Interest Bearing,,,2009-02-19
 SSF:72483,SFI:OMRXBONDALL,SEB Global High Yield IC,OMRX Bond All Index,Asset,0.005,Interest Bearing,,,2021-05-21
 SSF:70778,MSCI:990100NIUSD,SEB Global Indexnära C,MSCI WORLD TR (Net Index USD),Asset,0.004,Equity,,,2008-10-27
 SSF:61705,SFI:OMRXBONDALL,SEB Kortrantefond SEK A,OMRX Bond All Index,Asset,0.002,Interest Bearing,,,1987-10-09
@@ -46,9 +46,9 @@ SSF:62768,SFI:OMRXBONDALL,SEB Obligationsfond SEK,OMRX Bond All Index,Asset,0.00
 SSF:70060,NSx:OMRXREAL,SEB Realräntefond SEK Lux,OMRX Real Return Bond Index,Asset,0.008,Interest Bearing,,,2017-03-06
 SSF:60055,SII:CSNRXSE,SEB Sverigefond Småbolag Chans/Risk A,Carnegie Small Cap Net Return,Asset,0.015,Equity,,,1995-04-18
 SSF:69694,MSCI:891800PUSD,Storebrand Emerging Markets Plus A,MSCI Emerging Markets Net Index,Asset,0.007,Equity,,,2016-05-31
-SSF:62022,MSCI:127306PSEK,Storebrand Global All Countries A SEK,MSCI ACVVI COMM SVC INDEX 10-40(Price SEK),Asset,0.0031366,Equity,,,2000-05-25
-SSF:68700,MSCI:127306PSEK,Storebrand Global Low Volatility A SEK,MSCI ACVVI COMM SVC INDEX 10-40(Price SEK),Asset,0.007,Equity,,,2013-10-08
-SSF:69692,MSCI:127306PSEK,Storebrand Global Plus A SEK,MSCI ACVVI COMM SVC INDEX 10-40(Price SEK),Asset,0.0040903,Equity,,,2016-04-14
+SSF:62022,MSCI:144485PUSD,Storebrand Global All Countries A SEK,MSCI World All Cap (Net Index USD),Asset,0.0031366,Equity,,,2000-05-25
+SSF:68700,MSCI:144485PUSD,Storebrand Global Low Volatility A SEK,MSCI World All Cap (Net Index USD),Asset,0.007,Equity,,,2013-10-08
+SSF:69692,MSCI:144485PUSD,Storebrand Global Plus A SEK,MSCI World All Cap (Net Index USD),Asset,0.0040903,Equity,,,2016-04-14
 SSF:61535,SII:SIXRX,Storebrand Sverige A SEK,SIX Return Index,Asset,0.0020731,Equity,,,1998-12-23
 SSF:69876,SII:SIXRX,Storebrand Sverige Plus A SEK,SIX Return Index,Asset,0.0030915,Equity,,,2016-09-21
 SSF:69347,CBOE:MSEUEURP,Swedbank Robur Access Europa A,Morningstar Europe Index PR EU,Asset,0.002,Equity,,,2007-04-24

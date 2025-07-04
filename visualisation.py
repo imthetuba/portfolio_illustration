@@ -413,7 +413,7 @@ def export_multi_port_to_excel(finished_portfolios):
 
     output.seek(0)
     st.download_button(
-        label="Export Multi-Portfolio Summary Report",
+        label="Export Portfolio(s) Summary Report",
         data=output,
         file_name="multi_summary_report.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -613,7 +613,7 @@ def generate_multi_summary_report(finished_portfolios, allocation_limit,rolling_
     Display a summary report comparing multiple portfolios.
     finished_portfolios: dict of {portfolio_name: {combined_data, date_holdings_df, weights, asset_only_weights, period}}
     """
-    st.header("Multi-Portfolio Comparison")
+    st.header("Portfolio Summary Report")
 
     st.write("This report provides a summary of the portfolios performances, including key metrics, asset weights, and visualizations.")
     st.write("The portfolios returns are adjusted for ongoing charges (OGC) and the allocation limit is set to " + str(allocation_limit) + "%.")
